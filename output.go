@@ -42,7 +42,7 @@ func printOptionsErrors(err map[string]string) {
 }
 
 // print app title
-func title() {
+func printTitle() {
 	fmt.Println()
 	fmt.Println("█▀▀ █▀█ █▀█ █▀▀  █░█░█ ░▄▄ █▄ ▄▄▄ █▄▄ ▄▄░ ▄▄")
 	fmt.Println("█▄▄ █▄█ █▀▄ ▄▄█  █▄█▄█ ▀▄█ █▄ █▄▄ █░█ ██▄ █░")

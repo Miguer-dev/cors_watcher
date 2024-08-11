@@ -17,19 +17,19 @@ type application struct {
 }
 
 func main() {
-	title()
+	printTitle()
 
 	options := initOptions()
-
-	app := application{
-		options: options,
-		wg:      &sync.WaitGroup{},
-	}
 
 	optionsValidations := options.validateOptions()
 	if !optionsValidations.valid() {
 		printOptionsErrors(optionsValidations.Errors)
 		os.Exit(1)
+	}
+
+	app := application{
+		options: options,
+		wg:      &sync.WaitGroup{},
 	}
 
 	go func() {
