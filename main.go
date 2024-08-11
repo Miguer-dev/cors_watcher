@@ -28,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	requests, err := options.buildRequests()
+	requests, err := options.getRequests()
 	if err != nil {
 		printError(err.Error())
 		os.Exit(1)

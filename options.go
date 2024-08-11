@@ -2,17 +2,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
-)
-
-var (
-	errOpenFile = func(option string, filename string) error {
-		return fmt.Errorf(`%s Unable to open "%s" file`, option, filename)
-	}
 )
 
 type options struct {
@@ -34,11 +28,12 @@ func initOptions() *options {
 
 	flag.StringVar(&options.url, "u", "", "URL to check it´s CORS policy, it must start with http:// or https://")
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
-	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key: value, key:value, ..."`)
+	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
 	flag.StringVar(&options.origin, "g", "", "Set origin header, it must start with http:// or https://")
 	flag.StringVar(&options.origins_list, "gl", "", "Set filename containing the origins list")
-	flag.StringVar(&options.requests_list, "rl", "", "Set filename containing the requests list")
+	flag.StringVar(&options.requests_list, "rl", "", `Set filename containing the requests list, use json format for each row
+	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
 	flag.IntVar(&options.timeout, "t", 0, "Set requests timeout")
 	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
@@ -52,9 +47,10 @@ func initOptions() *options {
 func (o *options) validateOptions() *validator {
 	validator := validator{}
 
-	validator.check(notBlank(o.url), "-u", "You must use the -u command to set the target url")
-	validator.check(maxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
-	validator.check(matches(o.url, urlRX), "-u", "Must have a URL format, must start with http:// or https://")
+	validator.check(notBlank(o.url) || notBlank(o.requests_list), "-u,-rl", "You must use one of this commands")
+
+	validator.check(!notBlank(o.url) || maxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
+	validator.check(!notBlank(o.url) || matches(o.url, urlRX), "-u", "Must have a URL format, must start with http:// or https://")
 
 	validator.check(matches(o.method, methodRX), "-m", "Accepted methods GET, POST, PUT, DELETE and PATCH")
 
@@ -96,7 +92,6 @@ func (o *options) getOriginHeaders() ([]string, error) {
 	}
 
 	if o.origins_list != "" {
-
 		file, err := os.Open(o.origins_list)
 		if err != nil {
 			return nil, errOpenFile("-gl", o.origins_list)
@@ -109,13 +104,17 @@ func (o *options) getOriginHeaders() ([]string, error) {
 				origins = append(origins, url)
 			}
 		}
+
+		if err := scanner.Err(); err != nil {
+			return nil, errReadFile("-gl", o.origins_list)
+		}
 	}
 
 	return origins, nil
 }
 
-// build request from options
-func (o *options) buildRequests() (*[]request, error) {
+// get request from options
+func (o *options) getRequests() (*[]request, error) {
 	var requests []request
 
 	origins, err := o.getOriginHeaders()
@@ -123,36 +122,65 @@ func (o *options) buildRequests() (*[]request, error) {
 		return nil, err
 	}
 
+	for _, value := range origins {
+		fmt.Println(value)
+	}
+
 	if o.url != "" {
+		var headers = make(map[string]string)
 
-		for _, origin := range origins {
-			request := request{
-				url:     o.url,
-				method:  o.method,
-				headers: make(map[string]string),
-			}
-
-			if request.method != http.MethodGet {
-				request.data = o.data
-			}
-
-			headersList := strings.Split(o.headers, ",")
-			for _, header := range headersList {
-				splitHeader := strings.Split(header, ":")
-				request.headers[splitHeader[0]] = splitHeader[1]
-			}
-
-			request.headers["Origin"] = origin
-
-			fmt.Println(request.url)
-			fmt.Println(request.method)
-			fmt.Println(request.headers)
-			fmt.Println(request.data)
-			fmt.Println()
-
-			requests = append(requests, request)
+		headersList := strings.Split(o.headers, ",")
+		for _, header := range headersList {
+			splitHeader := strings.Split(header, ":")
+			headers[splitHeader[0]] = splitHeader[1]
 		}
 
+		request := request{
+			URL:     o.url,
+			Method:  o.method,
+			Headers: headers,
+			Data:    o.data,
+		}
+
+		originRequests := request.addRequestByOrigins(origins)
+
+		requests = append(requests, originRequests...)
+
+	}
+
+	if o.requests_list != "" {
+		file, err := os.Open(o.requests_list)
+		if err != nil {
+			return nil, errOpenFile("-rl", o.requests_list)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			var request request
+
+			lineReader := bytes.NewReader(scanner.Bytes())
+			err := readJSON(lineReader, &request)
+			if err != nil {
+				return nil, fmt.Errorf("-rl %s", err.Error())
+			}
+
+			requests = append(requests, request.addRequestByOrigins(origins)...)
+		}
+
+		if err := scanner.Err(); err != nil {
+			return nil, errReadFile("-rl", o.requests_list)
+		}
+
+	}
+
+	for _, value := range requests {
+		fmt.Println()
+		fmt.Println(value.URL)
+		fmt.Println(value.Method)
+		fmt.Println(value.Headers)
+		fmt.Println(value.Data)
+		fmt.Println()
 	}
 
 	return &requests, nil
