@@ -8,17 +8,17 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type Validator struct {
+type validator struct {
 	Errors map[string]string
 }
 
-// Valid returns true if the Validator struct doesn't contain any errors.
-func (v *Validator) Valid() bool {
+// Valid returns true if the validator struct doesn't contain any errors.
+func (v *validator) valid() bool {
 	return len(v.Errors) == 0
 }
 
 // AddFieldError adds an error message to the Errors map
-func (v *Validator) AddError(key, message string) {
+func (v *validator) addError(key, message string) {
 
 	if v.Errors == nil {
 		v.Errors = make(map[string]string)
@@ -30,53 +30,53 @@ func (v *Validator) AddError(key, message string) {
 }
 
 // CheckField adds an error message to the Errors map only if a validation check is not 'ok'.
-func (v *Validator) Check(ok bool, key, message string) {
+func (v *validator) check(ok bool, key, message string) {
 	if !ok {
-		v.AddError(key, message)
+		v.addError(key, message)
 	}
 }
 
 // NotBlank returns true if a value is not an empty string.
-func NotBlank(value string) bool {
+func notBlank(value string) bool {
 	return strings.TrimSpace(value) != ""
 }
 
 // MaxChars returns true if a value contains no more than n characters.
-func MaxChars(value string, n int) bool {
+func maxChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
 }
 
 // MinChars returns true if a value contains more than n characters.
-func MinChars(value string, n int) bool {
+func minChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) >= n
 }
 
-type Number interface {
+type number interface {
 	constraints.Integer | constraints.Float
 }
 
 // NotCero return true if a value is not 0
-func NotCero[T Number](value T) bool {
+func notCero[T number](value T) bool {
 	return value != 0
 }
 
 // MaxNumber returns true if a value is minor that n
-func MaxNumber[T Number](value T, n T) bool {
+func maxNumber[T number](value T, n T) bool {
 	return value <= n
 }
 
 // MinNumber returns true if a value is greater than n
-func MinNumber[T Number](value T, n T) bool {
+func minNumber[T number](value T, n T) bool {
 	return value >= n
 }
 
 // EqualValue returns true if the values are equals
-func EqualValue[T comparable](value1 T, value2 T) bool {
+func equalValue[T comparable](value1 T, value2 T) bool {
 	return value1 == value2
 }
 
 // PermittedValue returns true if a value is in a list of permitted.
-func PermittedValue[T comparable](value T, permittedValues ...T) bool {
+func permittedValue[T comparable](value T, permittedValues ...T) bool {
 	for i := range permittedValues {
 		if value == permittedValues[i] {
 			return true
@@ -85,19 +85,19 @@ func PermittedValue[T comparable](value T, permittedValues ...T) bool {
 	return false
 }
 
-var URLRX = regexp.MustCompile("((((https?|ftps?|gopher|telnet|nntp)://)|(mailto:|news:))([-%()_.!~*';/?:@&=+$,A-Za-z0-9])+)")
-var ProxyRX = regexp.MustCompile("^(http://|socks5://)")
-var MethodRX = regexp.MustCompile("^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)$")
-var HeaderRX = regexp.MustCompile("^([a-zA-Z0-9!#$%&'*+.^_`" + `|~-]+): [\S]+(, [a-zA-Z0-9!#$%&'*+.^_` + "`|~-]+: [" + `\S]+)*$`)
-var FileRX = regexp.MustCompile(`^[^/]*$`)
+var urlRX = regexp.MustCompile("((((https?|ftps?|gopher|telnet|nntp)://)|(mailto:|news:))([-%()_.!~*';/?:@&=+$,A-Za-z0-9])+)")
+var proxyRX = regexp.MustCompile("^(http://|socks5://)")
+var methodRX = regexp.MustCompile("^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)$")
+var headerRX = regexp.MustCompile("^([a-zA-Z0-9!#$%&'*+.^_`" + `|~-]+): [\S]+(, [a-zA-Z0-9!#$%&'*+.^_` + "`|~-]+: [" + `\S]+)*$`)
+var fileRX = regexp.MustCompile(`^[^/]*$`)
 
 // Matches return true if match with the pattern
-func Matches(value string, rxp *regexp.Regexp) bool {
+func matches(value string, rxp *regexp.Regexp) bool {
 	return rxp.MatchString(value)
 }
 
 // Unique return true if all values in a slice are unique.
-func Unique[T comparable](values []T) bool {
+func unique[T comparable](values []T) bool {
 	uniqueValues := make(map[T]bool)
 	for _, value := range values {
 		uniqueValues[value] = true

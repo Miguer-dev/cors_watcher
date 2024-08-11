@@ -4,7 +4,7 @@ import (
 	"flag"
 )
 
-type Options struct {
+type options struct {
 	url           string
 	method        string
 	headers       string
@@ -18,8 +18,8 @@ type Options struct {
 }
 
 // init options intance with command options values
-func initOptions() *Options {
-	options := Options{}
+func initOptions() *options {
+	options := options{}
 
 	flag.StringVar(&options.url, "u", "", "URL to check it´s CORS policy, it must start with http:// or https://")
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
@@ -38,36 +38,36 @@ func initOptions() *Options {
 }
 
 // validate options format
-func (o *Options) validateOptions() *Validator {
-	validator := Validator{}
+func (o *options) validateOptions() *validator {
+	validator := validator{}
 
-	validator.Check(NotBlank(o.url), "-u", "You must use the -u command to set the target url")
-	validator.Check(MaxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
-	validator.Check(Matches(o.url, URLRX), "-u", "Must have a URL format, must start with http:// or https://")
+	validator.check(notBlank(o.url), "-u", "You must use the -u command to set the target url")
+	validator.check(maxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
+	validator.check(matches(o.url, urlRX), "-u", "Must have a URL format, must start with http:// or https://")
 
-	validator.Check(Matches(o.method, MethodRX), "-m", "Accepted methods GET, POST, PUT, DELETE, HEAD, OPTIONS and PATCH")
+	validator.check(matches(o.method, methodRX), "-m", "Accepted methods GET, POST, PUT, DELETE, HEAD, OPTIONS and PATCH")
 
-	validator.Check(!NotBlank(o.headers) || MaxChars(o.headers, 500), "-h", "Cannot be longer than 500 characters")
-	validator.Check(!NotBlank(o.headers) || Matches(o.headers, HeaderRX), "-h", `Must follow the format "key: value, key:value, ..."`)
+	validator.check(!notBlank(o.headers) || maxChars(o.headers, 500), "-h", "Cannot be longer than 500 characters")
+	validator.check(!notBlank(o.headers) || matches(o.headers, headerRX), "-h", `Must follow the format "key: value, key:value, ..."`)
 
-	validator.Check(!NotBlank(o.data) || MaxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
+	validator.check(!notBlank(o.data) || maxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
 
-	validator.Check(!NotBlank(o.origin) || MaxChars(o.origin, 100), "-g", "Cannot be longer than 100 characters")
-	validator.Check(!NotBlank(o.origin) || Matches(o.origin, URLRX), "-g", "Must have a URL format, must start with http:// or https://")
+	validator.check(!notBlank(o.origin) || maxChars(o.origin, 100), "-g", "Cannot be longer than 100 characters")
+	validator.check(!notBlank(o.origin) || matches(o.origin, urlRX), "-g", "Must have a URL format, must start with http:// or https://")
 
-	validator.Check(!NotBlank(o.origins_list) || MaxChars(o.origins_list, 20), "-gl", "Cannot be longer than 20 characters")
-	validator.Check(!NotBlank(o.origins_list) || Matches(o.origins_list, FileRX), "-gl", "A filename cannot contain /")
+	validator.check(!notBlank(o.origins_list) || maxChars(o.origins_list, 20), "-gl", "Cannot be longer than 20 characters")
+	validator.check(!notBlank(o.origins_list) || matches(o.origins_list, fileRX), "-gl", "A filename cannot contain /")
 
-	validator.Check(!NotBlank(o.requests_list) || MaxChars(o.requests_list, 20), "-rl", "Cannot be longer than 20 characters")
-	validator.Check(!NotBlank(o.requests_list) || Matches(o.requests_list, FileRX), "-rl", "A filename cannot contain /")
+	validator.check(!notBlank(o.requests_list) || maxChars(o.requests_list, 20), "-rl", "Cannot be longer than 20 characters")
+	validator.check(!notBlank(o.requests_list) || matches(o.requests_list, fileRX), "-rl", "A filename cannot contain /")
 
-	validator.Check(!NotBlank(o.output) || MaxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
-	validator.Check(!NotBlank(o.output) || Matches(o.output, FileRX), "-o", "A filename cannot contain /")
+	validator.check(!notBlank(o.output) || maxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
+	validator.check(!notBlank(o.output) || matches(o.output, fileRX), "-o", "A filename cannot contain /")
 
-	validator.Check(MinNumber(o.timeout, 0), "-t", "Must be greater that 0")
-	validator.Check(MaxNumber(o.timeout, 10), "-t", "Must be lower that 10")
+	validator.check(minNumber(o.timeout, 0), "-t", "Must be greater that 0")
+	validator.check(maxNumber(o.timeout, 10), "-t", "Must be lower that 10")
 
-	validator.Check(!NotBlank(o.proxy) || Matches(o.proxy, ProxyRX), "-p", "Must start with http:// or socks5://")
+	validator.check(!notBlank(o.proxy) || matches(o.proxy, proxyRX), "-p", "Must start with http:// or socks5://")
 
 	return &validator
 }
