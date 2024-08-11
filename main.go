@@ -12,8 +12,9 @@ import (
 const version = "1.0.0"
 
 type application struct {
-	options *options
-	wg      *sync.WaitGroup
+	options  *options
+	requests *[]request
+	wg       *sync.WaitGroup
 }
 
 func main() {
@@ -27,9 +28,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	requests, err := options.buildRequests()
+	if err != nil {
+		printError(err.Error())
+		os.Exit(1)
+	}
+
 	app := application{
-		options: options,
-		wg:      &sync.WaitGroup{},
+		options:  options,
+		requests: requests,
+		wg:       &sync.WaitGroup{},
 	}
 
 	go func() {
