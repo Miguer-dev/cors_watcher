@@ -87,8 +87,8 @@ func permittedValue[T comparable](value T, permittedValues ...T) bool {
 
 var urlRX = regexp.MustCompile("((((https?|ftps?|gopher|telnet|nntp)://)|(mailto:|news:))([-%()_.!~*';/?:@&=+$,A-Za-z0-9])+)")
 var proxyRX = regexp.MustCompile("^(http://|socks5://)")
-var methodRX = regexp.MustCompile("^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)$")
-var headerRX = regexp.MustCompile("^([a-zA-Z0-9!#$%&'*+.^_`" + `|~-]+): [\S]+(, [a-zA-Z0-9!#$%&'*+.^_` + "`|~-]+: [" + `\S]+)*$`)
+var methodRX = regexp.MustCompile("^(GET|POST|PUT|DELETE|PATCH)$")
+var headerRX = regexp.MustCompile("^([a-zA-Z0-9!#$%&'*+.^_`" + `|~-]+):[\S]+(, [a-zA-Z0-9!#$%&'*+.^_` + "`|~-]+:[" + `\S]+)*$`)
 var fileRX = regexp.MustCompile(`^[^/]*$`)
 
 // Matches return true if match with the pattern
