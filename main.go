@@ -40,22 +40,24 @@ func main() {
 		wg:       &sync.WaitGroup{},
 	}
 
-	go func() {
-		quit := make(chan os.Signal, 1)
-		defer close(quit)
-
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-		s := <-quit
-
-		fmt.Println()
-		printWarning(fmt.Sprintf("Signal: %s", s.String()))
-		printWarning("Leaving ...")
-
-		app.wg.Wait()
-
-		os.Exit(0)
-	}()
+	go app.captureInterruptSignal()
 
 	time.Sleep(10 * time.Second)
+}
+
+func (app *application) captureInterruptSignal() {
+	quit := make(chan os.Signal, 1)
+	defer close(quit)
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	s := <-quit
+
+	fmt.Println()
+	printWarning(fmt.Sprintf("Signal: %s", s.String()))
+	printWarning("Leaving ...")
+
+	app.wg.Wait()
+
+	os.Exit(0)
 }
