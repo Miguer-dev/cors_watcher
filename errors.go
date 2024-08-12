@@ -6,13 +6,18 @@ import (
 	"fmt"
 )
 
+type optionError struct {
+	option string
+	err    error
+}
+
 var (
 	// file errors
-	errOpenFile = func(option string, filename string) error {
-		return fmt.Errorf(`%s Unable to open "%s" file`, option, filename)
+	errOpenFile = func(filename string) error {
+		return fmt.Errorf(`Unable to open "%s" file`, filename)
 	}
-	errReadFile = func(option string, filename string) error {
-		return fmt.Errorf(`%s Unable to read "%s" file`, option, filename)
+	errReadFile = func(filename string) error {
+		return fmt.Errorf(`Unable to read "%s" file`, filename)
 	}
 
 	// json errors

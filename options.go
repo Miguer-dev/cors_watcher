@@ -80,7 +80,7 @@ func (o *options) validateOptions() *validator {
 }
 
 // get origin headers from options
-func (o *options) getOriginHeaders() ([]string, error) {
+func (o *options) getOriginHeaders() ([]string, *optionError) {
 	var origins = []string{"https://test.com", "null"}
 
 	if o.origin != "" {
@@ -94,7 +94,7 @@ func (o *options) getOriginHeaders() ([]string, error) {
 	if o.origins_list != "" {
 		file, err := os.Open(o.origins_list)
 		if err != nil {
-			return nil, errOpenFile("-gl", o.origins_list)
+			return nil, &optionError{option: "-gl", err: errOpenFile(o.origins_list)}
 		}
 		defer file.Close()
 
@@ -106,7 +106,7 @@ func (o *options) getOriginHeaders() ([]string, error) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			return nil, errReadFile("-gl", o.origins_list)
+			return nil, &optionError{option: "-gl", err: errReadFile(o.origins_list)}
 		}
 	}
 
@@ -114,7 +114,7 @@ func (o *options) getOriginHeaders() ([]string, error) {
 }
 
 // get request from options
-func (o *options) getRequests() (*[]request, error) {
+func (o *options) getRequests() (*[]request, *optionError) {
 	var requests []request
 
 	origins, err := o.getOriginHeaders()
@@ -151,7 +151,7 @@ func (o *options) getRequests() (*[]request, error) {
 	if o.requests_list != "" {
 		file, err := os.Open(o.requests_list)
 		if err != nil {
-			return nil, errOpenFile("-rl", o.requests_list)
+			return nil, &optionError{option: "-rl", err: errOpenFile(o.requests_list)}
 		}
 		defer file.Close()
 
@@ -162,14 +162,14 @@ func (o *options) getRequests() (*[]request, error) {
 			lineReader := bytes.NewReader(scanner.Bytes())
 			err := readJSON(lineReader, &request)
 			if err != nil {
-				return nil, fmt.Errorf("-rl %s", err.Error())
+				return nil, &optionError{option: "-rl", err: err}
 			}
 
 			requests = append(requests, request.addRequestsByOrigins(origins)...)
 		}
 
 		if err := scanner.Err(); err != nil {
-			return nil, errReadFile("-rl", o.requests_list)
+			return nil, &optionError{option: "-rl", err: errReadFile(o.requests_list)}
 		}
 
 	}

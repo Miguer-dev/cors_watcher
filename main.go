@@ -30,7 +30,7 @@ func main() {
 
 	requests, err := options.getRequests()
 	if err != nil {
-		printError(err.Error())
+		err.printOptionError()
 		os.Exit(1)
 	}
 
