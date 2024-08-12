@@ -7,7 +7,7 @@ type request struct {
 	Data    string            `json:"data"`
 }
 
-func (r request) addRequestByOrigins(origins []string) []request {
+func (r request) addRequestsByOrigins(origins []string) []request {
 	var requests []request
 
 	for _, origin := range origins {

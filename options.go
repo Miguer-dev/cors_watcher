@@ -142,7 +142,7 @@ func (o *options) getRequests() (*[]request, error) {
 			Data:    o.data,
 		}
 
-		originRequests := request.addRequestByOrigins(origins)
+		originRequests := request.addRequestsByOrigins(origins)
 
 		requests = append(requests, originRequests...)
 
@@ -165,7 +165,7 @@ func (o *options) getRequests() (*[]request, error) {
 				return nil, fmt.Errorf("-rl %s", err.Error())
 			}
 
-			requests = append(requests, request.addRequestByOrigins(origins)...)
+			requests = append(requests, request.addRequestsByOrigins(origins)...)
 		}
 
 		if err := scanner.Err(); err != nil {
