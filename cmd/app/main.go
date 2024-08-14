@@ -22,6 +22,8 @@ type application struct {
 }
 
 func main() {
+	defer recoverPanic()
+
 	options := initOptions()
 
 	printTitle()

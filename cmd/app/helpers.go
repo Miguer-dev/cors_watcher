@@ -5,8 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 )
+
+// Print err after Panic
+func recoverPanic() {
+	if err := recover(); err != nil {
+		printError(fmt.Sprint(err))
+		os.Exit(1)
+	}
+}
 
 // execute function on the background with recover on Panic
 func (app *application) backgroundFuncWithRecover(fn func()) {
@@ -14,12 +23,7 @@ func (app *application) backgroundFuncWithRecover(fn func()) {
 
 	go func() {
 		defer app.wg.Done()
-
-		defer func() {
-			if err := recover(); err != nil {
-				printError(fmt.Sprint(err))
-			}
-		}()
+		defer recoverPanic()
 
 		fn()
 	}()
