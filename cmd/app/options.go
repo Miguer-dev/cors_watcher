@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"cors_watcher/internal/validator"
 )
 
 type options struct {
@@ -26,7 +28,7 @@ type options struct {
 func initOptions() *options {
 	options := options{}
 
-	flag.StringVar(&options.url, "u", "", "URL to check it´s CORS policy, it must start with http:// or https://")
+	flag.StringVar(&options.url, "u", "", "URL to Check it´s CORS policy, it must start with http:// or https://")
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
 	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
@@ -38,45 +40,52 @@ func initOptions() *options {
 	flag.IntVar(&options.timeout, "t", 0, "Set requests timeout")
 	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
 
+	displayVersion := flag.Bool("v", false, "Display version and exit")
+
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		os.Exit(0)
+	}
 
 	return &options
 }
 
 // validate options format
-func (o *options) validateOptions() *validator {
-	validator := validator{}
+func (o *options) validateOptions() *validator.Validator {
+	v := validator.Validator{}
 
-	validator.check(notBlank(o.url) || notBlank(o.requests_list), "-u,-rl", "You must use one of this commands")
+	v.Check(validator.NotBlank(o.url) || validator.NotBlank(o.requests_list), "-u,-rl", "You must use one of this commands")
 
-	validator.check(!notBlank(o.url) || maxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
-	validator.check(!notBlank(o.url) || matches(o.url, urlRX), "-u", "Must have a URL format, must start with http:// or https://")
+	v.Check(!validator.NotBlank(o.url) || validator.MaxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
+	v.Check(!validator.NotBlank(o.url) || validator.Matches(o.url, validator.URLRX), "-u", "Must have a URL format, must start with http:// or https://")
 
-	validator.check(matches(o.method, methodRX), "-m", "Accepted methods GET, POST, PUT, DELETE and PATCH")
+	v.Check(validator.Matches(o.method, validator.MethodRX), "-m", "Accepted methods GET, POST, PUT, DELETE and PATCH")
 
-	validator.check(!notBlank(o.headers) || maxChars(o.headers, 500), "-h", "Cannot be longer than 500 characters")
-	validator.check(!notBlank(o.headers) || matches(o.headers, headerRX), "-h", `Must follow the format "key:value, key:value, ..."`)
+	v.Check(!validator.NotBlank(o.headers) || validator.MaxChars(o.headers, 500), "-h", "Cannot be longer than 500 characters")
+	v.Check(!validator.NotBlank(o.headers) || validator.Matches(o.headers, validator.HeaderRX), "-h", `Must follow the format "key:value, key:value, ..."`)
 
-	validator.check(!notBlank(o.data) || maxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
+	v.Check(!validator.NotBlank(o.data) || validator.MaxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
 
-	validator.check(!notBlank(o.origin) || maxChars(o.origin, 100), "-g", "Cannot be longer than 100 characters")
-	validator.check(!notBlank(o.origin) || matches(o.origin, urlRX), "-g", "Must have a URL format, must start with http:// or https://")
+	v.Check(!validator.NotBlank(o.origin) || validator.MaxChars(o.origin, 100), "-g", "Cannot be longer than 100 characters")
+	v.Check(!validator.NotBlank(o.origin) || validator.Matches(o.origin, validator.URLRX), "-g", "Must have a URL format, must start with http:// or https://")
 
-	validator.check(!notBlank(o.origins_list) || maxChars(o.origins_list, 20), "-gl", "Cannot be longer than 20 characters")
-	validator.check(!notBlank(o.origins_list) || matches(o.origins_list, fileRX), "-gl", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.origins_list) || validator.MaxChars(o.origins_list, 20), "-gl", "Cannot be longer than 20 characters")
+	v.Check(!validator.NotBlank(o.origins_list) || validator.Matches(o.origins_list, validator.FileRX), "-gl", "A filename cannot contain /")
 
-	validator.check(!notBlank(o.requests_list) || maxChars(o.requests_list, 20), "-rl", "Cannot be longer than 20 characters")
-	validator.check(!notBlank(o.requests_list) || matches(o.requests_list, fileRX), "-rl", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.requests_list) || validator.MaxChars(o.requests_list, 20), "-rl", "Cannot be longer than 20 characters")
+	v.Check(!validator.NotBlank(o.requests_list) || validator.Matches(o.requests_list, validator.FileRX), "-rl", "A filename cannot contain /")
 
-	validator.check(!notBlank(o.output) || maxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
-	validator.check(!notBlank(o.output) || matches(o.output, fileRX), "-o", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.output) || validator.MaxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
+	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-o", "A filename cannot contain /")
 
-	validator.check(minNumber(o.timeout, 0), "-t", "Must be greater that 0")
-	validator.check(maxNumber(o.timeout, 10), "-t", "Must be lower that 10")
+	v.Check(validator.MinNumber(o.timeout, 0), "-t", "Must be greater that 0")
+	v.Check(validator.MaxNumber(o.timeout, 10), "-t", "Must be lower that 10")
 
-	validator.check(!notBlank(o.proxy) || matches(o.proxy, proxyRX), "-p", "Must start with http:// or socks5://")
+	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
 
-	return &validator
+	return &v
 }
 
 // get origin headers from options
@@ -100,7 +109,7 @@ func (o *options) getOriginHeaders() ([]string, *optionError) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			if url := scanner.Text(); matches(url, urlRX) {
+			if url := scanner.Text(); validator.Matches(url, validator.URLRX) {
 				origins = append(origins, url)
 			}
 		}

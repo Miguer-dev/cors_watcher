@@ -7,9 +7,13 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"cors_watcher/internal/vcs"
 )
 
-const version = "1.0.0"
+var (
+	version = vcs.Version()
+)
 
 type application struct {
 	options  *options
@@ -18,12 +22,12 @@ type application struct {
 }
 
 func main() {
-	printTitle()
-
 	options := initOptions()
 
+	printTitle()
+
 	optionsValidations := options.validateOptions()
-	if !optionsValidations.valid() {
+	if !optionsValidations.Valid() {
 		printOptionsErrors(optionsValidations.Errors)
 		os.Exit(1)
 	}
