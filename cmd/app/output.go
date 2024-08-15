@@ -55,11 +55,9 @@ func printWarning(text string) {
 func printTitle() {
 	fmt.Println()
 	fmt.Println()
-	fmt.Println()
 	fmt.Println("█▀▀ █▀█ █▀█ █▀▀  █░█░█ ░▄▄ █▄ ▄▄▄ █▄▄ ▄▄░ ▄▄")
 	fmt.Println("█▄▄ █▄█ █▀▄ ▄▄█  █▄█▄█ ▀▄█ █▄ █▄▄ █░█ ██▄ █░")
 	fmt.Println("░░░ ░░░ ░░░ ░░░  ░░░░░ ░░░ ░░ ░░░ ░░░ ░░░ ░░")
 	subtextFormat("                               by Miguer-dev")
-	fmt.Println()
 	fmt.Println()
 }
