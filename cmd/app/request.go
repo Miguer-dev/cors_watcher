@@ -3,8 +3,8 @@ package main
 type request struct {
 	URL     string            `json:"url"`
 	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Data    string            `json:"data"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Data    string            `json:"data,omitempty"`
 }
 
 func (r request) addRequestsByOrigins(origins []string) []request {
