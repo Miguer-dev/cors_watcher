@@ -1,7 +1,7 @@
 package main
 
 import (
-	"os"
+	"log"
 	"sync"
 
 	"cors_watcher/internal/vcs"
@@ -12,36 +12,34 @@ var (
 )
 
 type application struct {
-	options  *options
 	requests *[]request
 	wg       *sync.WaitGroup
+	errorLog *log.Logger
 }
 
 func main() {
-	defer recoverPanic()
-
-	options := initOptions()
-
 	printTitle()
 
+	app := application{
+		wg:       &sync.WaitGroup{},
+		errorLog: initErrorLog(),
+	}
+
+	defer app.recoverPanic()
+
+	go app.captureInterruptSignal()
+
+	options := initOptions()
 	optionsValidations := options.validateOptions()
 	if !optionsValidations.Valid() {
-		printOptionsErrors(optionsValidations.Errors)
-		os.Exit(1)
+		optsErrorPrintExit(optionsValidations.Errors)
 	}
 
 	requests, err := options.getRequests()
 	if err != nil {
-		err.printOptionError()
-		os.Exit(1)
+		optErrorPrintExit(err)
 	}
 
-	app := application{
-		options:  options,
-		requests: requests,
-		wg:       &sync.WaitGroup{},
-	}
-
-	go app.captureInterruptSignal()
+	app.requests = requests
 
 }

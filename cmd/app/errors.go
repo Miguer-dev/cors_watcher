@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"runtime/debug"
 )
 
 type optionError struct {
@@ -12,6 +15,9 @@ type optionError struct {
 }
 
 var (
+	// general errors
+	errDefault = errors.New("Program terminated due to a fatal error")
+
 	// file errors
 	errOpenFile = func(filename string) error {
 		return fmt.Errorf(`Unable to open "%s" file`, filename)
@@ -37,3 +43,41 @@ var (
 	}
 	errJsonSingleValue = errors.New("body must only contain a single JSON value")
 )
+
+// Create log file for errors and setup log format
+func initErrorLog() *log.Logger {
+	errorFile, err := os.OpenFile("logs/error.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		printError(err.Error())
+		os.Exit(1)
+	}
+
+	errorLog := log.New(errorFile, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	return errorLog
+}
+
+// Log error details, print error tittle and exit
+func (app *application) errorLogPrintExit(err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	app.errorLog.Output(2, trace)
+
+	printError(errDefault.Error())
+	os.Exit(1)
+}
+
+// Print several options errors and exit
+func optsErrorPrintExit(err map[string]string) {
+	for key, value := range err {
+		oe := &optionError{option: key, err: errors.New(value)}
+		printOptionError(oe)
+	}
+
+	os.Exit(1)
+}
+
+// Print option error and exit
+func optErrorPrintExit(err *optionError) {
+	printOptionError(err)
+	os.Exit(1)
+}

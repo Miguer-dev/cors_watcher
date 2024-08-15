@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -21,22 +20,10 @@ func printError(err string) {
 }
 
 // print option error
-func (optErr *optionError) printOptionError() {
+func printOptionError(optErr *optionError) {
 	errorFormat("[x] ")
 	highlightFormat(optErr.option)
 	infoFormat(" " + optErr.err.Error() + "\n")
-}
-
-// print options validation errors
-func printOptionsErrors(err map[string]string) {
-	fmt.Println()
-
-	for key, value := range err {
-		oe := &optionError{option: key, err: errors.New(value)}
-		oe.printOptionError()
-	}
-
-	fmt.Println()
 }
 
 // print text with info format
