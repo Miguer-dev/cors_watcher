@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 // Print err after Panic
@@ -27,6 +29,24 @@ func (app *application) backgroundFuncWithRecover(fn func()) {
 
 		fn()
 	}()
+}
+
+// capture interrupt signal and exit waiting for goroutines finish
+func (app *application) captureInterruptSignal() {
+	quit := make(chan os.Signal, 1)
+	defer close(quit)
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	s := <-quit
+
+	fmt.Println()
+	printWarning(fmt.Sprintf("Signal: %s", s.String()))
+	printWarning("Leaving ...")
+
+	app.wg.Wait()
+
+	os.Exit(0)
 }
 
 // read json and validate json fields
