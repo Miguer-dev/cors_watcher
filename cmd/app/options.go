@@ -138,10 +138,12 @@ func (o *options) getRequests() (*[]request, *optionError) {
 	if o.url != "" {
 		var headers = make(map[string]string)
 
-		headersList := strings.Split(o.headers, ",")
-		for _, header := range headersList {
-			splitHeader := strings.Split(header, ":")
-			headers[splitHeader[0]] = splitHeader[1]
+		if o.headers != "" {
+			headersList := strings.Split(o.headers, ",")
+			for _, header := range headersList {
+				splitHeader := strings.Split(header, ":")
+				headers[splitHeader[0]] = splitHeader[1]
+			}
 		}
 
 		request := request{
