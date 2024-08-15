@@ -63,8 +63,8 @@ func (o *options) validateOptions() *validator.Validator {
 
 	v.Check(validator.Matches(o.method, validator.MethodRX), "-m", "Accepted methods GET, POST, PUT, DELETE and PATCH")
 
-	v.Check(!validator.NotBlank(o.headers) || validator.MaxChars(o.headers, 500), "-h", "Cannot be longer than 500 characters")
-	v.Check(!validator.NotBlank(o.headers) || validator.Matches(o.headers, validator.HeaderRX), "-h", `Must follow the format "key:value, key:value, ..."`)
+	v.Check(!validator.NotBlank(o.headers) || validator.MaxChars(o.headers, 500), "-e", "Cannot be longer than 500 characters")
+	v.Check(!validator.NotBlank(o.headers) || validator.Matches(o.headers, validator.HeaderRX), "-e", `Must follow the format "key:value, key:value, ..."`)
 
 	v.Check(!validator.NotBlank(o.data) || validator.MaxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
 
@@ -81,9 +81,32 @@ func (o *options) validateOptions() *validator.Validator {
 	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-o", "A filename cannot contain /")
 
 	v.Check(validator.MinNumber(o.timeout, 0), "-t", "Must be greater that 0")
-	v.Check(validator.MaxNumber(o.timeout, 10), "-t", "Must be lower that 10")
+	v.Check(validator.MaxNumber(o.timeout, 100), "-t", "Must be lower that 100")
 
 	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
+
+	return &v
+}
+
+// validate request format from requestFile -rl
+func validateRequestList(url string, method string) *validator.Validator {
+	v := validator.Validator{}
+
+	v.Check(validator.NotBlank(url), "-rl", `Must contain key "url"`)
+	v.Check(validator.Matches(url, validator.URLRX), "-rl", `Key "url" must have a URL format, must start with http:// or https://"`)
+
+	v.Check(validator.NotBlank(method), "-rl", `Must contain key "method"`)
+	v.Check(validator.Matches(method, validator.MethodRX), "-rl", `Key "method" accepted methods GET, POST, PUT, DELETE and PATCH`)
+
+	return &v
+}
+
+// validate origins url format from originFile -gl
+func validateOriginList(origin string) *validator.Validator {
+	v := validator.Validator{}
+
+	v.Check(validator.NotBlank(origin), "-gl", `origin file can´t be empty`)
+	v.Check(validator.Matches(origin, validator.URLRX), "-gl", `origins must have a URL format, must start with http:// or https://"`)
 
 	return &v
 }
@@ -109,9 +132,13 @@ func (o *options) getOriginHeaders() ([]string, *optionError) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			if url := scanner.Text(); validator.Matches(url, validator.URLRX) {
-				origins = append(origins, url)
+			url := scanner.Text()
+
+			if originListValidations := validateOriginList(url); !originListValidations.Valid() {
+				optsErrorPrintExit(originListValidations.Errors)
 			}
+
+			origins = append(origins, url)
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -123,7 +150,7 @@ func (o *options) getOriginHeaders() ([]string, *optionError) {
 }
 
 // get request from options
-func (o *options) getRequests() (*[]request, *optionError) {
+func (o *options) getRequests() ([]request, *optionError) {
 	var requests []request
 
 	origins, err := o.getOriginHeaders()
@@ -176,6 +203,10 @@ func (o *options) getRequests() (*[]request, *optionError) {
 				return nil, &optionError{option: "-rl", err: err}
 			}
 
+			if requestListValidations := validateRequestList(request.URL, request.Method); !requestListValidations.Valid() {
+				optsErrorPrintExit(requestListValidations.Errors)
+			}
+
 			requests = append(requests, request.addRequestsByOrigins(origins)...)
 		}
 
@@ -194,5 +225,5 @@ func (o *options) getRequests() (*[]request, *optionError) {
 		fmt.Println()
 	}
 
-	return &requests, nil
+	return requests, nil
 }

@@ -12,7 +12,7 @@ var (
 )
 
 type application struct {
-	requests *[]request
+	requests []request
 	wg       *sync.WaitGroup
 	errorLog *log.Logger
 }
