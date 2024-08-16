@@ -7,6 +7,7 @@ type request struct {
 	Data    string            `json:"data,omitempty"`
 }
 
+// foreach origin duplicate request
 func (r request) addRequestsByOrigins(origins []string) []request {
 	var requests []request
 
