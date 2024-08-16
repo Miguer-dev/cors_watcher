@@ -1,10 +1,10 @@
 package main
 
 type request struct {
-	URL     string            `json:"url"`
-	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers,omitempty"`
-	Data    string            `json:"data,omitempty"`
+	url     string            `json:"url"`
+	method  string            `json:"method"`
+	headers map[string]string `json:"headers,omitempty"`
+	data    string            `json:"data,omitempty"`
 }
 
 func (r request) addRequestsByOrigins(origins []string) []request {
@@ -13,12 +13,12 @@ func (r request) addRequestsByOrigins(origins []string) []request {
 	for _, origin := range origins {
 		copyRequest := r
 
-		copyRequest.Headers = make(map[string]string)
-		for key, value := range r.Headers {
-			copyRequest.Headers[key] = value
+		copyRequest.headers = make(map[string]string)
+		for key, value := range r.headers {
+			copyRequest.headers[key] = value
 		}
 
-		copyRequest.Headers["Origin"] = origin
+		copyRequest.headers["Origin"] = origin
 
 		requests = append(requests, copyRequest)
 	}

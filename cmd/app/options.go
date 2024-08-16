@@ -174,10 +174,10 @@ func (o *options) getRequests() ([]request, *validator.OptionError) {
 		}
 
 		request := request{
-			URL:     o.url,
-			Method:  o.method,
-			Headers: headers,
-			Data:    o.data,
+			url:     o.url,
+			method:  o.method,
+			headers: headers,
+			data:    o.data,
 		}
 
 		originRequests := request.addRequestsByOrigins(origins)
@@ -203,7 +203,7 @@ func (o *options) getRequests() ([]request, *validator.OptionError) {
 				return nil, &validator.OptionError{Option: "-rl", Err: err.Error()}
 			}
 
-			if requestListValidations := validateRequestList(request.URL, request.Method); !requestListValidations.Valid() {
+			if requestListValidations := validateRequestList(request.url, request.method); !requestListValidations.Valid() {
 				optsErrorPrintExit(requestListValidations.Errors)
 			}
 
@@ -218,10 +218,10 @@ func (o *options) getRequests() ([]request, *validator.OptionError) {
 
 	for _, value := range requests {
 		fmt.Println()
-		fmt.Println(value.URL)
-		fmt.Println(value.Method)
-		fmt.Println(value.Headers)
-		fmt.Println(value.Data)
+		fmt.Println(value.url)
+		fmt.Println(value.method)
+		fmt.Println(value.headers)
+		fmt.Println(value.data)
 	}
 
 	return requests, nil
