@@ -134,7 +134,7 @@ func (o *options) getOriginsFromFile(v *validator.Validator) {
 		}
 
 		if !validator.Matches(url, validator.URLRX) {
-			v.AddError("-gl", `Origins must have a URL format, must start with http:// or https://"`)
+			v.AddError("-gl", `Origins must have a URL format, must start with http:// or https://`)
 			continue
 		}
 
