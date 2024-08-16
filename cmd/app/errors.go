@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cors_watcher/internal/validator"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,11 +9,6 @@ import (
 	"os"
 	"runtime/debug"
 )
-
-type optionError struct {
-	option string
-	err    error
-}
 
 var (
 	// general errors
@@ -67,17 +63,16 @@ func (app *application) errorLogPrintExit(err error) {
 }
 
 // Print several options errors and exit
-func optsErrorPrintExit(err map[string]string) {
-	for key, value := range err {
-		oe := &optionError{option: key, err: errors.New(value)}
-		printOptionError(oe)
+func optsErrorPrintExit(err []*validator.OptionError) {
+	for _, value := range err {
+		printOptionError(value)
 	}
 
 	os.Exit(1)
 }
 
 // Print option error and exit
-func optErrorPrintExit(err *optionError) {
+func optErrorPrintExit(err *validator.OptionError) {
 	printOptionError(err)
 	os.Exit(1)
 }

@@ -88,15 +88,15 @@ func (o *options) validateOptions() *validator.Validator {
 	return &v
 }
 
-// validate request format from requestFile -rl
+// validate requests format from requestFile -rl
 func validateRequestList(url string, method string) *validator.Validator {
 	v := validator.Validator{}
 
-	v.Check(validator.NotBlank(url), "-rl", `Must contain key "url"`)
-	v.Check(validator.Matches(url, validator.URLRX), "-rl", `Key "url" must have a URL format, must start with http:// or https://"`)
+	v.Check(validator.NotBlank(url), "-rl", `Each request must contain the “url” key`)
+	v.Check(!validator.NotBlank(url) || validator.Matches(url, validator.URLRX), "-rl", `The “url” key must have a URL format, must start with http:// or https://`)
 
-	v.Check(validator.NotBlank(method), "-rl", `Must contain key "method"`)
-	v.Check(validator.Matches(method, validator.MethodRX), "-rl", `Key "method" accepted methods GET, POST, PUT, DELETE and PATCH`)
+	v.Check(validator.NotBlank(method), "-rl", `Each request must contain the “method” key`)
+	v.Check(!validator.NotBlank(method) || validator.Matches(method, validator.MethodRX), "-rl", `The “method” key accepted values: GET, POST, PUT, DELETE and PATCH`)
 
 	return &v
 }
@@ -105,14 +105,14 @@ func validateRequestList(url string, method string) *validator.Validator {
 func validateOriginList(origin string) *validator.Validator {
 	v := validator.Validator{}
 
-	v.Check(validator.NotBlank(origin), "-gl", `origin file can´t be empty`)
-	v.Check(validator.Matches(origin, validator.URLRX), "-gl", `origins must have a URL format, must start with http:// or https://"`)
+	v.Check(validator.NotBlank(origin), "-gl", `There cannot be an empty row`)
+	v.Check(!validator.NotBlank(origin) || validator.Matches(origin, validator.URLRX), "-gl", `origins must have a URL format, must start with http:// or https://"`)
 
 	return &v
 }
 
 // get origin headers from options
-func (o *options) getOriginHeaders() ([]string, *optionError) {
+func (o *options) getOriginHeaders() ([]string, *validator.OptionError) {
 	var origins = []string{"https://test.com", "null"}
 
 	if o.origin != "" {
@@ -126,7 +126,7 @@ func (o *options) getOriginHeaders() ([]string, *optionError) {
 	if o.origins_list != "" {
 		file, err := os.Open(o.origins_list)
 		if err != nil {
-			return nil, &optionError{option: "-gl", err: errOpenFile(o.origins_list)}
+			return nil, &validator.OptionError{Option: "-gl", Err: errOpenFile(o.origins_list).Error()}
 		}
 		defer file.Close()
 
@@ -142,7 +142,7 @@ func (o *options) getOriginHeaders() ([]string, *optionError) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			return nil, &optionError{option: "-gl", err: errReadFile(o.origins_list)}
+			return nil, &validator.OptionError{Option: "-gl", Err: errReadFile(o.origins_list).Error()}
 		}
 	}
 
@@ -150,7 +150,7 @@ func (o *options) getOriginHeaders() ([]string, *optionError) {
 }
 
 // get request from options
-func (o *options) getRequests() ([]request, *optionError) {
+func (o *options) getRequests() ([]request, *validator.OptionError) {
 	var requests []request
 
 	origins, err := o.getOriginHeaders()
@@ -189,7 +189,7 @@ func (o *options) getRequests() ([]request, *optionError) {
 	if o.requests_list != "" {
 		file, err := os.Open(o.requests_list)
 		if err != nil {
-			return nil, &optionError{option: "-rl", err: errOpenFile(o.requests_list)}
+			return nil, &validator.OptionError{Option: "-rl", Err: errOpenFile(o.requests_list).Error()}
 		}
 		defer file.Close()
 
@@ -200,7 +200,7 @@ func (o *options) getRequests() ([]request, *optionError) {
 			lineReader := bytes.NewReader(scanner.Bytes())
 			err := readJSON(lineReader, &request)
 			if err != nil {
-				return nil, &optionError{option: "-rl", err: err}
+				return nil, &validator.OptionError{Option: "-rl", Err: err.Error()}
 			}
 
 			if requestListValidations := validateRequestList(request.URL, request.Method); !requestListValidations.Valid() {
@@ -211,7 +211,7 @@ func (o *options) getRequests() ([]request, *optionError) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			return nil, &optionError{option: "-rl", err: errReadFile(o.requests_list)}
+			return nil, &validator.OptionError{Option: "-rl", Err: errReadFile(o.requests_list).Error()}
 		}
 
 	}
@@ -222,7 +222,6 @@ func (o *options) getRequests() ([]request, *optionError) {
 		fmt.Println(value.Method)
 		fmt.Println(value.Headers)
 		fmt.Println(value.Data)
-		fmt.Println()
 	}
 
 	return requests, nil

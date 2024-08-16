@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cors_watcher/internal/validator"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -20,10 +21,10 @@ func printError(err string) {
 }
 
 // print option error
-func printOptionError(optErr *optionError) {
+func printOptionError(optErr *validator.OptionError) {
 	errorFormat("[x] ")
-	highlightFormat(optErr.option)
-	infoFormat(" " + optErr.err.Error() + "\n")
+	highlightFormat(optErr.Option)
+	infoFormat(" " + optErr.Err + "\n")
 }
 
 // print text with info format

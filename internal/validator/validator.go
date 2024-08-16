@@ -8,8 +8,13 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+type OptionError struct {
+	Option string
+	Err    string
+}
+
 type Validator struct {
-	Errors map[string]string
+	Errors []*OptionError
 }
 
 // Valid returns true if the validator struct doesn't contain any errors.
@@ -17,19 +22,17 @@ func (v *Validator) Valid() bool {
 	return len(v.Errors) == 0
 }
 
-// AddFieldError adds an error message to the Errors map
+// AddFieldError adds an error message to the OptionError slice
 func (v *Validator) AddError(key, message string) {
 
 	if v.Errors == nil {
-		v.Errors = make(map[string]string)
+		v.Errors = []*OptionError{}
 	}
 
-	if _, exists := v.Errors[key]; !exists {
-		v.Errors[key] = message
-	}
+	v.Errors = append(v.Errors, &OptionError{Option: key, Err: message})
 }
 
-// CheckField adds an error message to the Errors map only if a validation Check is not 'ok'.
+// CheckField adds an error message to the OptionError slice only if a validation Check is not 'ok'.
 func (v *Validator) Check(ok bool, key, message string) {
 	if !ok {
 		v.AddError(key, message)
