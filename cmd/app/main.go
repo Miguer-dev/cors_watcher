@@ -30,16 +30,8 @@ func main() {
 	go app.captureInterruptSignal()
 
 	options := initOptions()
-	optionsValidations := options.validateOptions()
-	if !optionsValidations.Valid() {
-		optsErrorPrintExit(optionsValidations.Errors)
-	}
 
-	requests, err := options.getRequests()
-	if err != nil {
-		optErrorPrintExit(err)
-	}
+	requests := options.buildRequests()
 
 	app.requests = requests
-
 }

@@ -12,16 +12,22 @@ import (
 )
 
 type options struct {
-	url           string
-	method        string
-	headers       string
-	data          string
-	origin        string
-	origins_list  string
-	requests_list string
-	output        string
-	timeout       int
-	proxy         string
+	url         string
+	method      string
+	headers     string
+	data        string
+	origin      string
+	originsFile struct {
+		fileName string
+		origins  []string
+	}
+	requestsFile struct {
+		fileName string
+		requests []request
+	}
+	output  string
+	timeout int
+	proxy   string
 }
 
 // init options intance with command options values
@@ -33,8 +39,8 @@ func initOptions() *options {
 	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
 	flag.StringVar(&options.origin, "g", "", "Set origin header, it must start with http:// or https://")
-	flag.StringVar(&options.origins_list, "gl", "", "Set filename containing the origins list")
-	flag.StringVar(&options.requests_list, "rl", "", `Set filename containing the requests list, use json format for each row
+	flag.StringVar(&options.originsFile.fileName, "gl", "", "Set filename containing the origins list")
+	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
 	flag.IntVar(&options.timeout, "t", 0, "Set requests timeout")
@@ -49,14 +55,37 @@ func initOptions() *options {
 		os.Exit(0)
 	}
 
+	v := &validator.Validator{}
+
+	options.validateOptions(v)
+
+	if !v.Valid() {
+		optsErrorPrintExit(v.Errors)
+	}
+
+	if options.originsFile.fileName != "" {
+		options.getOriginsFromFile(v)
+
+		if !v.Valid() {
+			optsErrorPrintExit(v.Errors)
+		}
+	}
+
+	if options.requestsFile.fileName != "" {
+		options.getRequestsFromFile(v)
+
+		if !v.Valid() {
+			optsErrorPrintExit(v.Errors)
+		}
+	}
+
 	return &options
 }
 
 // validate options format
-func (o *options) validateOptions() *validator.Validator {
-	v := validator.Validator{}
+func (o *options) validateOptions(v *validator.Validator) {
 
-	v.Check(validator.NotBlank(o.url) || validator.NotBlank(o.requests_list), "-u,-rl", "You must use one of this commands")
+	v.Check(validator.NotBlank(o.url) || validator.NotBlank(o.requestsFile.fileName), "-u,-rl", "You must use one of this commands")
 
 	v.Check(!validator.NotBlank(o.url) || validator.MaxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
 	v.Check(!validator.NotBlank(o.url) || validator.Matches(o.url, validator.URLRX), "-u", "Must have a URL format, must start with http:// or https://")
@@ -71,11 +100,11 @@ func (o *options) validateOptions() *validator.Validator {
 	v.Check(!validator.NotBlank(o.origin) || validator.MaxChars(o.origin, 100), "-g", "Cannot be longer than 100 characters")
 	v.Check(!validator.NotBlank(o.origin) || validator.Matches(o.origin, validator.URLRX), "-g", "Must have a URL format, must start with http:// or https://")
 
-	v.Check(!validator.NotBlank(o.origins_list) || validator.MaxChars(o.origins_list, 20), "-gl", "Cannot be longer than 20 characters")
-	v.Check(!validator.NotBlank(o.origins_list) || validator.Matches(o.origins_list, validator.FileRX), "-gl", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.MaxChars(o.originsFile.fileName, 20), "-gl", "Cannot be longer than 20 characters")
+	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.Matches(o.originsFile.fileName, validator.FileRX), "-gl", "A filename cannot contain /")
 
-	v.Check(!validator.NotBlank(o.requests_list) || validator.MaxChars(o.requests_list, 20), "-rl", "Cannot be longer than 20 characters")
-	v.Check(!validator.NotBlank(o.requests_list) || validator.Matches(o.requests_list, validator.FileRX), "-rl", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.MaxChars(o.requestsFile.fileName, 20), "-rl", "Cannot be longer than 20 characters")
+	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.Matches(o.requestsFile.fileName, validator.FileRX), "-rl", "A filename cannot contain /")
 
 	v.Check(!validator.NotBlank(o.output) || validator.MaxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
 	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-o", "A filename cannot contain /")
@@ -84,35 +113,92 @@ func (o *options) validateOptions() *validator.Validator {
 	v.Check(validator.MaxNumber(o.timeout, 100), "-t", "Must be lower that 100")
 
 	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
-
-	return &v
 }
 
-// validate requests format from requestFile -rl
-func validateRequestList(url string, method string) *validator.Validator {
-	v := validator.Validator{}
+// get and validate origins from originsFile -gl
+func (o *options) getOriginsFromFile(v *validator.Validator) {
+	file, err := os.Open(o.originsFile.fileName)
+	if err != nil {
+		v.AddError("-gl", errOpenFile(o.originsFile.fileName).Error())
+		return
+	}
+	defer file.Close()
 
-	v.Check(validator.NotBlank(url), "-rl", `Each request must contain the “url” key`)
-	v.Check(!validator.NotBlank(url) || validator.Matches(url, validator.URLRX), "-rl", `The “url” key must have a URL format, must start with http:// or https://`)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		url := scanner.Text()
 
-	v.Check(validator.NotBlank(method), "-rl", `Each request must contain the “method” key`)
-	v.Check(!validator.NotBlank(method) || validator.Matches(method, validator.MethodRX), "-rl", `The “method” key accepted values: GET, POST, PUT, DELETE and PATCH`)
+		if !validator.NotBlank(url) {
+			v.AddError("-gl", `There cannot be an empty row`)
+			continue
+		}
 
-	return &v
+		if !validator.Matches(url, validator.URLRX) {
+			v.AddError("-gl", `Origins must have a URL format, must start with http:// or https://"`)
+			continue
+		}
+
+		o.originsFile.origins = append(o.originsFile.origins, url)
+	}
+
+	if err := scanner.Err(); err != nil {
+		v.AddError("-gl", errReadFile(o.originsFile.fileName).Error())
+		return
+	}
 }
 
-// validate origins url format from originFile -gl
-func validateOriginList(origin string) *validator.Validator {
-	v := validator.Validator{}
+// get and validate requests from requestsFile -rl
+func (o *options) getRequestsFromFile(v *validator.Validator) {
+	file, err := os.Open(o.requestsFile.fileName)
+	if err != nil {
+		v.AddError("-rl", errOpenFile(file.Name()).Error())
+		return
+	}
+	defer file.Close()
 
-	v.Check(validator.NotBlank(origin), "-gl", `There cannot be an empty row`)
-	v.Check(!validator.NotBlank(origin) || validator.Matches(origin, validator.URLRX), "-gl", `origins must have a URL format, must start with http:// or https://"`)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var request request
 
-	return &v
+		lineReader := bytes.NewReader(scanner.Bytes())
+
+		err := readJSON(lineReader, &request)
+		if err != nil {
+			v.AddError("-rl", err.Error())
+			continue
+		}
+
+		if !validator.NotBlank(request.URL) {
+			v.AddError("-rl", `Each request must contain the “url” key`)
+			continue
+		}
+
+		if !validator.Matches(request.URL, validator.URLRX) {
+			v.AddError("-rl", `The “url” key must have a URL format, must start with http:// or https://`)
+			continue
+		}
+
+		if !validator.NotBlank(request.Method) {
+			v.AddError("-rl", `Each request must contain the “method” key`)
+			continue
+		}
+
+		if !validator.Matches(request.Method, validator.MethodRX) {
+			v.AddError("-rl", `The “method” key accepted values: GET, POST, PUT, DELETE and PATCH`)
+			continue
+		}
+
+		o.requestsFile.requests = append(o.requestsFile.requests, request)
+	}
+
+	if err := scanner.Err(); err != nil {
+		v.AddError("-rl", errReadFile(o.requestsFile.fileName).Error())
+		return
+	}
 }
 
-// get origin headers from options
-func (o *options) getOriginHeaders() ([]string, *validator.OptionError) {
+// get origin headers from all options
+func (o *options) getAllOriginHeaders() []string {
 	var origins = []string{"https://test.com", "null"}
 
 	if o.origin != "" {
@@ -123,40 +209,18 @@ func (o *options) getOriginHeaders() ([]string, *validator.OptionError) {
 		origins = append(origins, o.url)
 	}
 
-	if o.origins_list != "" {
-		file, err := os.Open(o.origins_list)
-		if err != nil {
-			return nil, &validator.OptionError{Option: "-gl", Err: errOpenFile(o.origins_list).Error()}
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			url := scanner.Text()
-
-			if originListValidations := validateOriginList(url); !originListValidations.Valid() {
-				optsErrorPrintExit(originListValidations.Errors)
-			}
-
-			origins = append(origins, url)
-		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, &validator.OptionError{Option: "-gl", Err: errReadFile(o.origins_list).Error()}
-		}
+	if len(o.originsFile.origins) != 0 {
+		origins = append(origins, o.originsFile.origins...)
 	}
 
-	return origins, nil
+	return origins
 }
 
-// get request from options
-func (o *options) getRequests() ([]request, *validator.OptionError) {
+// build requests with all options
+func (o *options) buildRequests() []request {
 	var requests []request
 
-	origins, err := o.getOriginHeaders()
-	if err != nil {
-		return nil, err
-	}
+	origins := o.getAllOriginHeaders()
 
 	for _, value := range origins {
 		fmt.Println(value)
@@ -180,40 +244,13 @@ func (o *options) getRequests() ([]request, *validator.OptionError) {
 			Data:    o.data,
 		}
 
-		originRequests := request.addRequestsByOrigins(origins)
-
-		requests = append(requests, originRequests...)
-
+		requests = append(requests, request.addRequestsByOrigins(origins)...)
 	}
 
-	if o.requests_list != "" {
-		file, err := os.Open(o.requests_list)
-		if err != nil {
-			return nil, &validator.OptionError{Option: "-rl", Err: errOpenFile(o.requests_list).Error()}
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			var request request
-
-			lineReader := bytes.NewReader(scanner.Bytes())
-			err := readJSON(lineReader, &request)
-			if err != nil {
-				return nil, &validator.OptionError{Option: "-rl", Err: err.Error()}
-			}
-
-			if requestListValidations := validateRequestList(request.URL, request.Method); !requestListValidations.Valid() {
-				optsErrorPrintExit(requestListValidations.Errors)
-			}
-
+	if len(o.requestsFile.requests) != 0 {
+		for _, request := range o.requestsFile.requests {
 			requests = append(requests, request.addRequestsByOrigins(origins)...)
 		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, &validator.OptionError{Option: "-rl", Err: errReadFile(o.requests_list).Error()}
-		}
-
 	}
 
 	for _, value := range requests {
@@ -224,5 +261,5 @@ func (o *options) getRequests() ([]request, *validator.OptionError) {
 		fmt.Println(value.Data)
 	}
 
-	return requests, nil
+	return requests
 }
