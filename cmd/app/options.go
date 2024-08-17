@@ -16,7 +16,6 @@ type options struct {
 	method      string
 	headers     string
 	data        string
-	origin      string
 	originsFile struct {
 		fileName string
 		origins  []string
@@ -38,7 +37,6 @@ func initOptions() *options {
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
 	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
-	flag.StringVar(&options.origin, "g", "", "Set origin header, it must start with http:// or https://")
 	flag.StringVar(&options.originsFile.fileName, "gl", "", "Set filename containing the origins list")
 	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
@@ -96,9 +94,6 @@ func (o *options) validateOptions(v *validator.Validator) {
 	v.Check(!validator.NotBlank(o.headers) || validator.Matches(o.headers, validator.HeaderRX), "-e", `Must follow the format "key:value, key:value, ..."`)
 
 	v.Check(!validator.NotBlank(o.data) || validator.MaxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
-
-	v.Check(!validator.NotBlank(o.origin) || validator.MaxChars(o.origin, 100), "-g", "Cannot be longer than 100 characters")
-	v.Check(!validator.NotBlank(o.origin) || validator.Matches(o.origin, validator.URLRX), "-g", "Must have a URL format, must start with http:// or https://")
 
 	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.MaxChars(o.originsFile.fileName, 20), "-gl", "Cannot be longer than 20 characters")
 	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.Matches(o.originsFile.fileName, validator.FileRX), "-gl", "A filename cannot contain /")
@@ -200,10 +195,6 @@ func (o *options) getRequestsFromFile(v *validator.Validator) {
 // get origin headers from all options
 func (o *options) getAllOriginHeaders() []string {
 	var origins = []string{"https://test.com", "null"}
-
-	if o.origin != "" {
-		origins = append(origins, o.origin)
-	}
 
 	if o.url != "" {
 		origins = append(origins, o.url)
