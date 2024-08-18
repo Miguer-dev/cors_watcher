@@ -30,7 +30,7 @@ type options struct {
 
 // init options intance with command options values
 func initOptions() *options {
-	options := options{}
+	options := &options{}
 
 	flag.StringVar(&options.url, "u", "", "URL to Check it´s CORS policy, it must start with http:// or https://")
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
@@ -40,7 +40,7 @@ func initOptions() *options {
 	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
-	flag.IntVar(&options.timeout, "t", 0, "Set requests timeout")
+	flag.IntVar(&options.timeout, "t", 10, "Set requests timeout, default 10 seconds")
 	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
 
 	displayVersion := flag.Bool("v", false, "Display version and exit")
@@ -76,7 +76,7 @@ func initOptions() *options {
 		}
 	}
 
-	return &options
+	return options
 }
 
 // validate options format
@@ -104,7 +104,7 @@ func (o *options) validateOptions(v *validator.Validator) {
 	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-o", "A filename cannot contain /")
 
 	v.Check(validator.MinNumber(o.timeout, 0), "-t", "Must be greater that 0")
-	v.Check(validator.MaxNumber(o.timeout, 100), "-t", "Must be lower that 100")
+	v.Check(validator.MaxNumber(o.timeout, 10), "-t", "Must be lower that 10")
 
 	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
 }
