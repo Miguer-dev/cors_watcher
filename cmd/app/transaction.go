@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"net/http"
 	"strings"
 )
 
@@ -9,6 +11,7 @@ type transaction struct {
 	request  request
 	response response
 	tags     []tag
+	err      error
 }
 
 type request struct {
@@ -20,7 +23,7 @@ type request struct {
 
 type response struct {
 	statusCode int
-	length     int
+	length     int64
 	ACDetected bool   // Access-Control-* headers detected
 	ACAO       string // Access-Control-Allow-Origin value
 	ACAC       string // Access-Control-Allow-Credentials value
@@ -47,7 +50,7 @@ var (
 		threat:  "medium",
 	}
 
-	http = tag{
+	mim = tag{
 		exploit: "Http + ManInTheMiddle",
 		threat:  "low",
 	}
@@ -277,4 +280,38 @@ func setOrigins(url string, o *options) []*originSearch {
 	}
 
 	return originDefaults
+}
+
+// Send Request
+func (t *transaction) sendRequest(client *http.Client) {
+	request, err := http.NewRequest(t.request.Method, t.request.URL, bytes.NewBuffer([]byte(t.request.Data)))
+	if err != nil {
+		t.err = err
+		return
+	}
+
+	for key, value := range t.request.Headers {
+		request.Header.Add(key, value)
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		t.err = err
+		return
+	}
+
+	t.response.length = response.ContentLength
+	t.response.statusCode = response.StatusCode
+
+	for key, value := range response.Header {
+		if strings.Contains(key, "Access-Control-") {
+			t.response.ACDetected = true
+
+			if key == "Access-Control-Allow-Origin" {
+				t.response.ACAO = value[0]
+			} else if key == "Access-Control-Allow-Credentials" {
+				t.response.ACAC = value[0]
+			}
+		}
+	}
 }
