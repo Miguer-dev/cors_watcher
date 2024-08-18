@@ -59,8 +59,8 @@ var (
 )
 
 // build transactions with all options
-func initTransactions(o *options) []transaction {
-	var transactions []transaction
+func initTransactions(o *options) []*transaction {
+	var transactions []*transaction
 
 	if o.url != "" {
 		var headers = make(map[string]string)
@@ -80,16 +80,16 @@ func initTransactions(o *options) []transaction {
 			Data:    o.data,
 		}
 
-		transactions = append(transactions, transaction{request: request})
+		transactions = append(transactions, &transaction{request: request})
 	}
 
 	if len(o.requestsFile.requests) != 0 {
 		for _, request := range o.requestsFile.requests {
-			transactions = append(transactions, transaction{request: request})
+			transactions = append(transactions, &transaction{request: request})
 		}
 	}
 
-	var resultTransactions []transaction
+	var resultTransactions []*transaction
 
 	for _, transaction := range transactions {
 		resultTransactions = append(resultTransactions, transaction.addtransactionsByOrigins(o)...)
@@ -99,8 +99,8 @@ func initTransactions(o *options) []transaction {
 }
 
 // foreach origin duplicate request
-func (t transaction) addtransactionsByOrigins(o *options) []transaction {
-	var transactions []transaction
+func (t transaction) addtransactionsByOrigins(o *options) []*transaction {
+	var transactions []*transaction
 
 	origins := setOrigins(t.request.URL, o)
 
@@ -116,7 +116,7 @@ func (t transaction) addtransactionsByOrigins(o *options) []transaction {
 		copyTransaction.name = origin.name
 		copyTransaction.tags = origin.tags
 
-		transactions = append(transactions, copyTransaction)
+		transactions = append(transactions, &copyTransaction)
 	}
 
 	return transactions
@@ -129,8 +129,8 @@ type originSearch struct {
 }
 
 // set origins fota URL
-func setOrigins(url string, o *options) []originSearch {
-	originDefaults := []originSearch{
+func setOrigins(url string, o *options) []*originSearch {
+	originDefaults := []*originSearch{
 		{
 			name:   "Origin reflected",
 			origin: "https://test.com",
@@ -147,7 +147,7 @@ func setOrigins(url string, o *options) []originSearch {
 		splitOrigin := splitURL(url)
 
 		if splitOrigin[0] != "" {
-			hostOriginOption := []originSearch{
+			hostOriginOption := []*originSearch{
 				{
 					name:   "Origin domain",
 					origin: o.url,
@@ -271,7 +271,7 @@ func setOrigins(url string, o *options) []originSearch {
 
 	if len(o.originsFile.origins) != 0 {
 		for _, origin := range o.originsFile.origins {
-			originDefaults = append(originDefaults, originSearch{name: "Origin List", origin: origin})
+			originDefaults = append(originDefaults, &originSearch{name: "Origin List", origin: origin})
 		}
 
 	}
