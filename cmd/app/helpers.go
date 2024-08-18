@@ -98,3 +98,18 @@ func readJSON(body io.Reader, dst any) error {
 
 	return nil
 }
+
+// Separate "http://" or "https://" from the url
+func splitURL(url string) []string {
+	var result []string
+
+	if strings.HasPrefix(url, "http://") {
+		result = append(result, "http://", url[7:])
+	} else if strings.HasPrefix(url, "https://") {
+		result = append(result, "https://", url[8:])
+	} else {
+		result = append(result, "", url)
+	}
+
+	return result
+}
