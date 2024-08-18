@@ -26,13 +26,9 @@ func TestValidateOptions(t *testing.T) {
 		{
 			name: "wrong url format",
 			options: options{method: "GET",
-				url:    "test.com",
-				origin: "test.com"},
+				url: "test.com"},
 			expectedErrors: []*validator.OptionError{
 				{Option: "-u",
-					Err: "Must have a URL format, must start with http:// or https://",
-				},
-				{Option: "-g",
 					Err: "Must have a URL format, must start with http:// or https://",
 				},
 			},
@@ -40,8 +36,7 @@ func TestValidateOptions(t *testing.T) {
 		{
 			name: "good url format",
 			options: options{method: "GET",
-				url:    "http://test.com",
-				origin: "https://test.com"},
+				url: "http://test.com"},
 			expectedErrors: []*validator.OptionError{},
 		},
 		{
@@ -140,7 +135,7 @@ func TestValidateOptions(t *testing.T) {
 					fileName: "requests/1.txt"},
 				output: "output. /file"},
 			expectedErrors: []*validator.OptionError{
-				{Option: "-gl",
+				{Option: "-ol",
 					Err: "A filename cannot contain /",
 				},
 				{Option: "-rl",
@@ -273,10 +268,10 @@ func TestGetOriginsFromFile(t *testing.T) {
 				"http://example.com",
 			},
 			expectedErrors: []*validator.OptionError{
-				{Option: "-gl",
+				{Option: "-ol",
 					Err: "There cannot be an empty row",
 				},
-				{Option: "-gl",
+				{Option: "-ol",
 					Err: `Origins must have a URL format, must start with http:// or https://`,
 				},
 			},

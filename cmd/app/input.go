@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"cors_watcher/internal/validator"
 )
@@ -37,7 +36,7 @@ func initOptions() *options {
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
 	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
-	flag.StringVar(&options.originsFile.fileName, "gl", "", "Set filename containing the origins list")
+	flag.StringVar(&options.originsFile.fileName, "ol", "", "Set filename containing the origins list")
 	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
@@ -95,8 +94,8 @@ func (o *options) validateOptions(v *validator.Validator) {
 
 	v.Check(!validator.NotBlank(o.data) || validator.MaxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
 
-	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.MaxChars(o.originsFile.fileName, 20), "-gl", "Cannot be longer than 20 characters")
-	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.Matches(o.originsFile.fileName, validator.FileRX), "-gl", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.MaxChars(o.originsFile.fileName, 20), "-ol", "Cannot be longer than 20 characters")
+	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.Matches(o.originsFile.fileName, validator.FileRX), "-ol", "A filename cannot contain /")
 
 	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.MaxChars(o.requestsFile.fileName, 20), "-rl", "Cannot be longer than 20 characters")
 	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.Matches(o.requestsFile.fileName, validator.FileRX), "-rl", "A filename cannot contain /")
@@ -110,11 +109,11 @@ func (o *options) validateOptions(v *validator.Validator) {
 	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
 }
 
-// get and validate origins from originsFile -gl
+// get and validate origins from originsFile -ol
 func (o *options) getOriginsFromFile(v *validator.Validator) {
 	file, err := os.Open(o.originsFile.fileName)
 	if err != nil {
-		v.AddError("-gl", errOpenFile(o.originsFile.fileName).Error())
+		v.AddError("-ol", errOpenFile(o.originsFile.fileName).Error())
 		return
 	}
 	defer file.Close()
@@ -124,12 +123,12 @@ func (o *options) getOriginsFromFile(v *validator.Validator) {
 		url := scanner.Text()
 
 		if !validator.NotBlank(url) {
-			v.AddError("-gl", `There cannot be an empty row`)
+			v.AddError("-ol", `There cannot be an empty row`)
 			continue
 		}
 
 		if !validator.Matches(url, validator.URLRX) {
-			v.AddError("-gl", `Origins must have a URL format, must start with http:// or https://`)
+			v.AddError("-ol", `Origins must have a URL format, must start with http:// or https://`)
 			continue
 		}
 
@@ -137,7 +136,7 @@ func (o *options) getOriginsFromFile(v *validator.Validator) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		v.AddError("-gl", errReadFile(o.originsFile.fileName).Error())
+		v.AddError("-ol", errReadFile(o.originsFile.fileName).Error())
 		return
 	}
 }
@@ -190,67 +189,4 @@ func (o *options) getRequestsFromFile(v *validator.Validator) {
 		v.AddError("-rl", errReadFile(o.requestsFile.fileName).Error())
 		return
 	}
-}
-
-// get origin headers from all options
-func (o *options) getAllOriginHeaders() []string {
-	var origins = []string{"https://test.com", "null"}
-
-	if o.url != "" {
-		origins = append(origins, o.url)
-	}
-
-	if len(o.originsFile.origins) != 0 {
-		origins = append(origins, o.originsFile.origins...)
-	}
-
-	return origins
-}
-
-// build requests with all options
-func (o *options) buildRequests() []request {
-	var requests []request
-
-	origins := o.getAllOriginHeaders()
-
-	for _, value := range origins {
-		fmt.Println(value)
-	}
-
-	if o.url != "" {
-		var headers = make(map[string]string)
-
-		if o.headers != "" {
-			headersList := strings.Split(o.headers, ",")
-			for _, header := range headersList {
-				splitHeader := strings.Split(header, ":")
-				headers[splitHeader[0]] = splitHeader[1]
-			}
-		}
-
-		request := request{
-			URL:     o.url,
-			Method:  o.method,
-			Headers: headers,
-			Data:    o.data,
-		}
-
-		requests = append(requests, request.addRequestsByOrigins(origins)...)
-	}
-
-	if len(o.requestsFile.requests) != 0 {
-		for _, request := range o.requestsFile.requests {
-			requests = append(requests, request.addRequestsByOrigins(origins)...)
-		}
-	}
-
-	for _, value := range requests {
-		fmt.Println()
-		fmt.Println(value.URL)
-		fmt.Println(value.Method)
-		fmt.Println(value.Headers)
-		fmt.Println(value.Data)
-	}
-
-	return requests
 }

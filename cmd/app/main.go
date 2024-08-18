@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -12,7 +13,6 @@ var (
 )
 
 type application struct {
-	requests []request
 	wg       *sync.WaitGroup
 	errorLog *log.Logger
 }
@@ -31,7 +31,17 @@ func main() {
 
 	options := initOptions()
 
-	requests := options.buildRequests()
+	transactions := initTransactions(options)
 
-	app.requests = requests
+	for _, transaction := range transactions {
+
+		fmt.Println(transaction.name)
+		fmt.Println(transaction.tags)
+		fmt.Println(transaction.request.URL)
+		fmt.Println(transaction.request.Method)
+		fmt.Println(transaction.request.Headers)
+		fmt.Println(transaction.request.Data)
+		fmt.Println()
+
+	}
 }
