@@ -23,9 +23,10 @@ type options struct {
 		fileName string
 		requests []request
 	}
-	output  string
-	timeout int64
-	proxy   string
+	output    string
+	timeout   int64
+	timedelay float64
+	proxy     string
 }
 
 // init options intance with command options values
@@ -40,7 +41,8 @@ func initOptions() *options {
 	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
-	flag.Int64Var(&options.timeout, "t", 10, "Set requests timeout, default 10 seconds")
+	flag.Int64Var(&options.timeout, "to", 10, "Set requests timeout, default 10 seconds")
+	flag.Float64Var(&options.timedelay, "td", 0, "Set delay between requests, default 0 seconds")
 	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
 
 	displayVersion := flag.Bool("v", false, "Display version and exit")
@@ -103,8 +105,11 @@ func (o *options) validateOptions(v *validator.Validator) {
 	v.Check(!validator.NotBlank(o.output) || validator.MaxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
 	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-o", "A filename cannot contain /")
 
-	v.Check(validator.MinNumber(o.timeout, 0), "-t", "Must be greater that 0")
-	v.Check(validator.MaxNumber(o.timeout, 10), "-t", "Must be lower that 10")
+	v.Check(validator.MinNumber(o.timeout, 0), "-to", "Must be greater that 0")
+	v.Check(validator.MaxNumber(o.timeout, 10), "-to", "Must be lower that 10")
+
+	v.Check(validator.MinNumber(o.timedelay, 0), "-td", "Must be greater that 0")
+	v.Check(validator.MaxNumber(o.timedelay, 5), "-td", "Must be lower that 5")
 
 	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
 }

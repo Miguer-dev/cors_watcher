@@ -41,7 +41,7 @@ func main() {
 
 	for _, transaction := range transactions {
 		transaction.sendRequest(client)
-		time.Sleep(time.Duration(0.2 * float64(time.Second)))
+		time.Sleep(time.Duration(options.timedelay * float64(time.Second)))
 
 		fmt.Println(transaction.name)
 		fmt.Println(transaction.tags)
