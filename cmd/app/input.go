@@ -24,7 +24,7 @@ type options struct {
 		requests []request
 	}
 	output  string
-	timeout int
+	timeout int64
 	proxy   string
 }
 
@@ -33,14 +33,14 @@ func initOptions() *options {
 	options := &options{}
 
 	flag.StringVar(&options.url, "u", "", "URL to Check it´s CORS policy, it must start with http:// or https://")
-	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)")
+	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, PATCH)")
 	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
 	flag.StringVar(&options.originsFile.fileName, "ol", "", "Set filename containing the origins list")
 	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
-	flag.IntVar(&options.timeout, "t", 10, "Set requests timeout, default 10 seconds")
+	flag.Int64Var(&options.timeout, "t", 10, "Set requests timeout, default 10 seconds")
 	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
 
 	displayVersion := flag.Bool("v", false, "Display version and exit")

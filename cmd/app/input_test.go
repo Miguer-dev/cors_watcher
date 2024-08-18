@@ -161,10 +161,10 @@ func TestValidateOptions(t *testing.T) {
 			name: "max 100 timeout",
 			options: options{method: "GET",
 				url:     "http://test.com",
-				timeout: 101},
+				timeout: 11},
 			expectedErrors: []*validator.OptionError{
 				{Option: "-t",
-					Err: "Must be lower that 100",
+					Err: "Must be lower that 10",
 				},
 			},
 		},
