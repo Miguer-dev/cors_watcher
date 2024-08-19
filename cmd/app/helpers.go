@@ -123,6 +123,7 @@ func splitURL(url string) []string {
 	return result
 }
 
+// create string with only spaces
 func spaces(num int, max int) string {
 	if len(strconv.Itoa(num)) > max {
 		return ""
