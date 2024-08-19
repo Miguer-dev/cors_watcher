@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"strings"
 )
 
 type transaction struct {
-	name     string
 	request  request
 	response response
 	tags     []tag
@@ -23,17 +23,19 @@ type request struct {
 
 type response struct {
 	statusCode int
-	length     int64
+	length     int
 	ACDetected bool   // Access-Control-* headers detected
-	ACAO       string // Access-Control-Allow-Origin value
-	ACAC       string // Access-Control-Allow-Credentials value
+	ACAO       string // Access-Control-Allow-Origin header
+	ACAC       string // Access-Control-Allow-Credentials header
+	vary       bool   // Vary: Origin header detected
 }
 
 type tag struct {
-	exploit string
-	threat  string
+	info  string
+	print func(a ...interface{})
 }
 
+/*
 var (
 	xsrf = tag{
 		exploit: "Origin impersonation + XSRF",
@@ -60,6 +62,7 @@ var (
 		threat:  "low",
 	}
 )
+*/
 
 // build transactions with all options
 func initTransactions(o *options) []*transaction {
@@ -115,9 +118,7 @@ func (t transaction) addtransactionsByOrigins(o *options) []*transaction {
 			copyTransaction.request.Headers[key] = value
 		}
 
-		copyTransaction.request.Headers["Origin"] = origin.origin
-		copyTransaction.name = origin.name
-		copyTransaction.tags = origin.tags
+		copyTransaction.request.Headers["Origin"] = origin
 
 		transactions = append(transactions, &copyTransaction)
 	}
@@ -125,158 +126,48 @@ func (t transaction) addtransactionsByOrigins(o *options) []*transaction {
 	return transactions
 }
 
-type originSearch struct {
-	name   string
-	origin string
-	tags   []tag
-}
-
-// set origins fota URL
-func setOrigins(url string, o *options) []*originSearch {
-	originDefaults := []*originSearch{
-		{
-			name:   "Origin reflected",
-			origin: "https://test.com",
-			tags:   []tag{xsrf},
-		},
-		{
-			name:   "Origin null",
-			origin: "null",
-			tags:   []tag{xsrf},
-		},
-	}
+// set origins for URL
+func setOrigins(url string, o *options) []string {
+	originDefaults := []string{"https://test.com", "null"}
 
 	if url != "" {
 		splitOrigin := splitURL(url)
 
 		if splitOrigin[0] != "" {
-			hostOriginOption := []*originSearch{
-				{
-					name:   "Origin domain",
-					origin: o.url,
-				},
-				{
-					name:   "Origin suffix",
-					origin: splitOrigin[0] + "test" + splitOrigin[1],
-					tags:   []tag{xsrf},
-				},
-				{
-					name:   "Origin prefix",
-					origin: o.url + ".test.com",
-					tags:   []tag{xsrf},
-				},
-				{
-					name:   "Origin subdomain",
-					origin: splitOrigin[0] + "test." + splitOrigin[1],
-					tags:   []tag{xss},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "!.test.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + `".evil.com`,
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "$.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "%0b.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "%60.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "&.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "'.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "(.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + ").evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "*.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + ",.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + ";.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "=.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "^.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "`.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "{.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "|.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "}.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
-				{
-					name:   "Origin subdomain special characters",
-					origin: splitOrigin[0] + "test." + splitOrigin[1] + "~.evil.com",
-					tags:   []tag{browser, xsrf},
-				},
+			hostOriginOption := []string{
+				splitOrigin[0] + splitOrigin[1],
+				splitOrigin[0] + "test" + splitOrigin[1],
+				splitOrigin[0] + splitOrigin[1] + ".test.com",
+				splitOrigin[0] + "test." + splitOrigin[1],
+				splitOrigin[0] + "test." + splitOrigin[1] + "!.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + `".test.com`,
+				splitOrigin[0] + "test." + splitOrigin[1] + "$.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "%0b.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "%60.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "&.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "'.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "(.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + ").test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "*.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + ",.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + ";.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "=.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "^.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "`.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "{.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "|.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "}.test.com",
+				splitOrigin[0] + "test." + splitOrigin[1] + "~.test.com",
 			}
 
 			originDefaults = append(originDefaults, hostOriginOption...)
 		}
-
 	}
 
 	if len(o.originsFile.origins) != 0 {
 		for _, origin := range o.originsFile.origins {
-			originDefaults = append(originDefaults, &originSearch{name: "Origin List", origin: origin})
+			originDefaults = append(originDefaults, origin)
 		}
-
 	}
 
 	return originDefaults
@@ -300,7 +191,7 @@ func (t *transaction) sendRequest(client *http.Client) {
 		return
 	}
 
-	t.response.length = response.ContentLength
+	t.response.length = int(response.ContentLength)
 	t.response.statusCode = response.StatusCode
 
 	for key, value := range response.Header {
@@ -313,5 +204,53 @@ func (t *transaction) sendRequest(client *http.Client) {
 				t.response.ACAC = value[0]
 			}
 		}
+
+		if key == "Vary" {
+			for _, vary := range value {
+				if vary == "Origin" {
+					t.response.vary = true
+					break
+				}
+			}
+		}
+
+	}
+}
+
+// create tags from response
+func (t *transaction) addTags() {
+	if t.err != nil {
+		t.tags = append(t.tags, tag{info: " Transaction Fail ", print: redBackgroundFormat})
+		return
+	}
+
+	if t.response.ACDetected {
+		t.tags = append(t.tags, tag{info: " AC* ", print: cyanBackgroundFormat})
+
+		if t.response.ACAO != "" {
+
+			switch t.response.ACAO {
+			case "*":
+				t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+			default:
+				t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: yellowBackgroundFormat})
+			}
+
+			switch t.response.ACAC {
+			case "true":
+				t.tags = append(t.tags, tag{info: " ACAC:true ", print: redBackgroundFormat})
+			case "false":
+				t.tags = append(t.tags, tag{info: " ACAC:false ", print: greenBackgroundFormat})
+			}
+
+			if strings.Contains(t.response.ACAO, "http://") {
+				t.tags = append(t.tags, tag{info: " HTTP ", print: yellowBackgroundFormat})
+			}
+
+			if !t.response.vary {
+				t.tags = append(t.tags, tag{info: " Not Vary: Origin ", print: yellowBackgroundFormat})
+			}
+		}
+
 	}
 }
