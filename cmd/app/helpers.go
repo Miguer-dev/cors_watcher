@@ -40,9 +40,7 @@ func (app *application) captureInterruptSignal() {
 
 	s := <-quit
 
-	fmt.Println()
-	printWarning(fmt.Sprintf("Signal: %s", s.String()))
-	printWarning("Leaving ...")
+	printInterrupt(s)
 
 	app.wg.Wait()
 

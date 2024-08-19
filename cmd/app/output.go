@@ -3,6 +3,7 @@ package main
 import (
 	"cors_watcher/internal/validator"
 	"fmt"
+	"os"
 
 	"github.com/fatih/color"
 )
@@ -13,7 +14,7 @@ var successFormat = color.New(color.FgGreen, color.Bold).PrintfFunc()
 var infoFormat = color.New(color.FgHiWhite, color.Bold).PrintfFunc()
 var subtextFormat = color.New(color.FgHiBlack).PrintlnFunc()
 var highlightFormat = color.New(color.FgCyan, color.Bold).PrintFunc()
-var headerFormat = color.New(color.BgBlue, color.FgBlack, color.Bold).PrintFunc()
+var headerFormat = color.New(color.BgWhite, color.FgBlack, color.Bold).PrintFunc()
 var redBackgroundFormat = color.New(color.BgRed, color.FgBlack, color.Bold).PrintFunc()
 var yellowBackgroundFormat = color.New(color.BgYellow, color.FgBlack, color.Bold).PrintFunc()
 var greenBackgroundFormat = color.New(color.BgGreen, color.FgBlack, color.Bold).PrintFunc()
@@ -44,6 +45,14 @@ func printWarning(text string) {
 	infoFormat(text + "\n")
 }
 
+// print interrupt signal
+func printInterrupt(s os.Signal) {
+	fmt.Println()
+	fmt.Println()
+	printWarning(fmt.Sprintf("Signal: %s", s.String()))
+	printWarning("Leaving ...")
+}
+
 // print app title
 func printTitle() {
 	fmt.Println()
@@ -52,7 +61,6 @@ func printTitle() {
 	fmt.Println("█▄▄ █▄█ █▀▄ ▄▄█  █▄█▄█ ▀▄█ █▄ █▄▄ █░█ ██▄ █░")
 	fmt.Println("░░░ ░░░ ░░░ ░░░  ░░░░░ ░░░ ░░ ░░░ ░░░ ░░░ ░░")
 	subtextFormat("                               by Miguer-dev")
-	fmt.Println()
 }
 
 func (transaction *transaction) printTableHeader() {
