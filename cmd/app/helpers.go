@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -99,17 +100,33 @@ func readJSON(body io.Reader, dst any) error {
 	return nil
 }
 
-// Separate "http://" or "https://" from the url
+// Separate http prefix and host from the url
 func splitURL(url string) []string {
 	var result []string
 
 	if strings.HasPrefix(url, "http://") {
-		result = append(result, "http://", url[7:])
+		noPrefix := url[7:]
+		split1 := strings.Split(noPrefix, "/")
+		split2 := strings.Split(split1[0], ":")
+
+		result = append(result, "http://", split2[0])
 	} else if strings.HasPrefix(url, "https://") {
-		result = append(result, "https://", url[8:])
+		noPrefix := url[8:]
+		split1 := strings.Split(noPrefix, "/")
+		split2 := strings.Split(split1[0], ":")
+
+		result = append(result, "https://", split2[0])
 	} else {
 		result = append(result, "", url)
 	}
 
 	return result
+}
+
+func spaces(num int, max int) string {
+	if len(strconv.Itoa(num)) > max {
+		return ""
+	} else {
+		return strings.Repeat(" ", max-len(strconv.Itoa(num)))
+	}
 }
