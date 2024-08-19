@@ -35,35 +35,6 @@ type tag struct {
 	print func(a ...interface{})
 }
 
-/*
-var (
-	xsrf = tag{
-		exploit: "Origin impersonation + XSRF",
-		threat:  "hight",
-	}
-
-	browser = tag{
-		exploit: "Browser dependent",
-		threat:  "medium",
-	}
-
-	xss = tag{
-		exploit: "Trusted Subdomains + XSS",
-		threat:  "medium",
-	}
-
-	mim = tag{
-		exploit: "Http + ManInTheMiddle",
-		threat:  "low",
-	}
-
-	cache = tag{
-		exploit: "Cache Poisoning",
-		threat:  "low",
-	}
-)
-*/
-
 // build transactions with all options
 func initTransactions(o *options) []*transaction {
 	var transactions []*transaction
