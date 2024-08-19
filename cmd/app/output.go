@@ -85,6 +85,3 @@ func (transaction *transaction) printTableTransaction(url string) string {
 	fmt.Println()
 	return url
 }
-
-// strconv.FormatBool(transaction.response.ACDetected), transaction.response.ACAO, transaction.response.ACAC}
-//"AC Detected", "ACAO", "ACAC"
