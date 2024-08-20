@@ -37,7 +37,7 @@ func (app *application) backgroundFuncWithRecover(fn func()) {
 	}()
 }
 
-// capture interrupt signal and exit waiting for goroutines finish
+// capture interrupt signal and exit
 func (app *application) captureInterruptSignal() {
 	quit := make(chan os.Signal, 1)
 	defer close(quit)
@@ -47,8 +47,6 @@ func (app *application) captureInterruptSignal() {
 	s := <-quit
 
 	printInterrupt(s)
-
-	app.wg.Wait()
 
 	os.Exit(0)
 }
