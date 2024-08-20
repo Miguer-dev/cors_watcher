@@ -16,8 +16,9 @@ type options struct {
 	headers     string
 	data        string
 	originsFile struct {
-		fileName string
-		origins  []string
+		fileName        string
+		origins         []string
+		onlyOriginsFile bool
 	}
 	requestsFile struct {
 		fileName string
@@ -33,16 +34,17 @@ type options struct {
 func initOptions() *options {
 	options := &options{}
 
-	flag.StringVar(&options.url, "u", "", "URL to Check it´s CORS policy, it must start with http:// or https://")
+	flag.StringVar(&options.url, "u", "", "URL to check it´s CORS policy, it must start with http:// or https://")
 	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, PATCH)")
 	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
 	flag.StringVar(&options.data, "d", "", "Set request data")
 	flag.StringVar(&options.originsFile.fileName, "ol", "", "Set filename containing the origins list")
+	flag.BoolVar(&options.originsFile.onlyOriginsFile, "ool", false, "Only use origins from origins list file")
 	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
 	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
-	flag.Int64Var(&options.timeout, "to", 10, "Set requests timeout, default 10 seconds")
-	flag.Float64Var(&options.timedelay, "td", 0, "Set delay between requests, default 0 seconds")
+	flag.Int64Var(&options.timeout, "to", 10, "Set requests timeout")
+	flag.Float64Var(&options.timedelay, "td", 0, "Set delay between requests (default 0)")
 	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
 
 	displayVersion := flag.Bool("v", false, "Display version and exit")

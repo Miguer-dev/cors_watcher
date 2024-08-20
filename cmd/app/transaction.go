@@ -103,48 +103,52 @@ func (t transaction) addtransactionsByOrigins(o *options) []*transaction {
 
 // set origins for URL
 func setOrigins(u string, o *options) []string {
-	originDefaults := []string{"https://test.com", "null"}
+	originList := []string{}
 
-	host, err := url.Parse(u)
-	if err == nil {
+	if !o.originsFile.onlyOriginsFile {
+		originList = append(originList, "https://test.com", "null")
 
-		hostOriginOption := []string{
-			host.Scheme + "://" + host.Host,
-			host.Scheme + "://" + "test" + host.Host,
-			addPortIfExist(host.Scheme+"://"+host.Hostname()+".test.com", host),
-			host.Scheme + "://" + "test." + host.Host,
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"!.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+`".test.com`, host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"$.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"%0b.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"%60.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"_.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"&.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"'.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"(.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+").test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"*.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+",.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+";.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"=.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"^.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"`.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"{.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"|.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"}.test.com", host),
-			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"~.test.com", host),
+		host, err := url.Parse(u)
+		if err == nil {
+
+			hostOriginOption := []string{
+				host.Scheme + "://" + host.Host,
+				host.Scheme + "://" + "test" + host.Host,
+				addPortIfExist(host.Scheme+"://"+host.Hostname()+".test.com", host),
+				host.Scheme + "://" + "test." + host.Host,
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"!.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+`".test.com`, host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"$.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"%0b.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"%60.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"_.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"&.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"'.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"(.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+").test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"*.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+",.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+";.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"=.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"^.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"`.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"{.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"|.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"}.test.com", host),
+				addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"~.test.com", host),
+			}
+
+			originList = append(originList, hostOriginOption...)
 		}
-
-		originDefaults = append(originDefaults, hostOriginOption...)
 	}
 
 	if len(o.originsFile.origins) != 0 {
 		for _, origin := range o.originsFile.origins {
-			originDefaults = append(originDefaults, origin)
+			originList = append(originList, origin)
 		}
 	}
 
-	return originDefaults
+	return originList
 }
 
 // Send Request
