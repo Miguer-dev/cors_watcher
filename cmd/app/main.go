@@ -14,6 +14,7 @@ var (
 
 type application struct {
 	wg       *sync.WaitGroup
+	mu       *sync.Mutex
 	errorLog *log.Logger
 }
 
@@ -23,6 +24,7 @@ func main() {
 	app := application{
 		wg:       &sync.WaitGroup{},
 		errorLog: initErrorLog(),
+		mu:       &sync.Mutex{},
 	}
 
 	defer app.recoverPanic()
@@ -41,12 +43,15 @@ func main() {
 		printTableHeader(arrayTransactions[0])
 
 		for _, transaction := range arrayTransactions {
-			transaction.sendRequest(client)
-			transaction.addTags()
-
-			printTableTransaction(transaction)
+			app.backgroundFuncWithRecover(func() {
+				transaction.sendRequest(client)
+				transaction.addTags()
+				app.printTableTransaction(transaction)
+			})
 
 			time.Sleep(time.Duration(options.timedelay * float64(time.Second)))
 		}
+
+		app.wg.Wait()
 	}
 }

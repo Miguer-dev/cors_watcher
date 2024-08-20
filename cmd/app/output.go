@@ -104,9 +104,12 @@ func printTableHeader(transaction *transaction) {
 }
 
 // print transaction has table row
-func printTableTransaction(transaction *transaction) {
+func (app *application) printTableTransaction(transaction *transaction) {
 	status := transaction.response.statusCode
 	len := transaction.response.length
+
+	app.mu.Lock()
+	defer app.mu.Unlock()
 
 	fmt.Printf("| %d%s| %d%s| %s", status, spaces(status, 5), len, spaces(len, 5), transaction.request.Headers["Origin"])
 
