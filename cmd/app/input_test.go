@@ -107,8 +107,9 @@ func TestValidateOptions(t *testing.T) {
 			options: options{method: "GET",
 				url: "http://test.com",
 				originsFile: struct {
-					fileName string
-					origins  []string
+					fileName        string
+					origins         []string
+					onlyOriginsFile bool
 				}{
 					fileName: "origins"},
 				requestsFile: struct {
@@ -124,8 +125,9 @@ func TestValidateOptions(t *testing.T) {
 			options: options{method: "GET",
 				url: "http://test.com",
 				originsFile: struct {
-					fileName string
-					origins  []string
+					fileName        string
+					origins         []string
+					onlyOriginsFile bool
 				}{
 					fileName: "origi/ns"},
 				requestsFile: struct {
@@ -242,8 +244,9 @@ func TestGetOriginsFromFile(t *testing.T) {
 			name: "originsFile good format",
 			options: options{
 				originsFile: struct {
-					fileName string
-					origins  []string
+					fileName        string
+					origins         []string
+					onlyOriginsFile bool
 				}{
 					fileName: createTempFile(
 						t,
@@ -261,8 +264,9 @@ func TestGetOriginsFromFile(t *testing.T) {
 			name: "originsFile empty",
 			options: options{
 				originsFile: struct {
-					fileName string
-					origins  []string
+					fileName        string
+					origins         []string
+					onlyOriginsFile bool
 				}{
 					fileName: createTempFile(
 						t,
@@ -277,8 +281,9 @@ func TestGetOriginsFromFile(t *testing.T) {
 			name: "originsFile bad format",
 			options: options{
 				originsFile: struct {
-					fileName string
-					origins  []string
+					fileName        string
+					origins         []string
+					onlyOriginsFile bool
 				}{
 					fileName: createTempFile(
 						t,
