@@ -120,3 +120,69 @@ func (app *application) printTableTransaction(transaction *transaction) {
 
 	fmt.Println()
 }
+
+// save output in file
+func printFile(filename string, transactions [][]*transaction) {
+	if filename != "" {
+
+		file, err := os.Create(filename)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-o", Err: err.Error()})
+		}
+		defer file.Close()
+
+		var text string
+
+		for _, arrayTransactions := range transactions {
+
+			text += "[+] URL: " + arrayTransactions[0].request.URL + "\n"
+			text += "[+] Method: " + arrayTransactions[0].request.Method + "\n"
+
+			if len(arrayTransactions[0].request.Headers) > 1 {
+
+				headers := "[+] Headers: {"
+				for key, value := range arrayTransactions[0].request.Headers {
+					if key != "Origin" {
+						headers += fmt.Sprintf("%s: %s, ", key, value)
+					}
+				}
+				headers = headers[:len(headers)-2]
+				headers += "}\n"
+
+				text += headers
+			}
+
+			if arrayTransactions[0].request.Data != "" && arrayTransactions[0].request.Method != "GET" {
+				text += "[+] Data: " + arrayTransactions[0].request.Data + "\n"
+			}
+
+			text += "+------+------+-------------\n"
+			text += "|STATUS| SIZE |   ORIGIN    \n"
+			text += "+------+------+-------------\n"
+
+			for _, transaction := range arrayTransactions {
+				status := transaction.response.statusCode
+				len := transaction.response.length
+
+				text += fmt.Sprintf("| %d%s| %d%s| %s", status, spaces(status, 5), len, spaces(len, 5), transaction.request.Headers["Origin"])
+
+				for _, tag := range transaction.tags {
+					text += fmt.Sprint(" ")
+					text += tag.info
+				}
+
+				text += "\n"
+			}
+			text += "\n"
+		}
+
+		_, err = file.WriteString(text)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-o", Err: err.Error()})
+		}
+
+		fmt.Println()
+		printWarning("Saving output ...")
+		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
+	}
+}

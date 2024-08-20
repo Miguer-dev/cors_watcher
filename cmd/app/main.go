@@ -54,4 +54,6 @@ func main() {
 
 		app.wg.Wait()
 	}
+
+	printFile(options.output, transactions)
 }
