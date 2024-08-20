@@ -37,13 +37,16 @@ func main() {
 
 	printGeneralOptions(options)
 
-	var url string
-	for _, transaction := range transactions {
-		transaction.sendRequest(client)
-		transaction.addTags()
+	for _, arrayTransactions := range transactions {
+		printTableHeader(arrayTransactions[0])
 
-		url = printTableTransaction(url, transaction)
+		for _, transaction := range arrayTransactions {
+			transaction.sendRequest(client)
+			transaction.addTags()
 
-		time.Sleep(time.Duration(options.timedelay * float64(time.Second)))
+			printTableTransaction(transaction)
+
+			time.Sleep(time.Duration(options.timedelay * float64(time.Second)))
+		}
 	}
 }

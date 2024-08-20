@@ -104,12 +104,7 @@ func printTableHeader(transaction *transaction) {
 }
 
 // print transaction has table row
-func printTableTransaction(url string, transaction *transaction) string {
-	if url != transaction.request.URL {
-		printTableHeader(transaction)
-		url = transaction.request.URL
-	}
-
+func printTableTransaction(transaction *transaction) {
 	status := transaction.response.statusCode
 	len := transaction.response.length
 
@@ -121,5 +116,4 @@ func printTableTransaction(url string, transaction *transaction) string {
 	}
 
 	fmt.Println()
-	return url
 }

@@ -36,7 +36,7 @@ type tag struct {
 }
 
 // build transactions with all options
-func initTransactions(o *options) []*transaction {
+func initTransactions(o *options) [][]*transaction {
 	var transactions []*transaction
 
 	if o.url != "" {
@@ -66,10 +66,10 @@ func initTransactions(o *options) []*transaction {
 		}
 	}
 
-	var resultTransactions []*transaction
+	var resultTransactions [][]*transaction
 
 	for _, transaction := range transactions {
-		resultTransactions = append(resultTransactions, transaction.addtransactionsByOrigins(o)...)
+		resultTransactions = append(resultTransactions, transaction.addtransactionsByOrigins(o))
 	}
 
 	return resultTransactions
