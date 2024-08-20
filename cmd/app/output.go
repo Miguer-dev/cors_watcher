@@ -70,7 +70,7 @@ func (transaction *transaction) printTableHeader() {
 	headerFormat(" " + transaction.request.Method + " ")
 	fmt.Println()
 	fmt.Println("+------+------+-------------")
-	fmt.Println("|STATUS| SIZE |   Origin    ")
+	fmt.Println("|STATUS| SIZE |   ORIGIN    ")
 	fmt.Println("+------+------+-------------")
 }
 
