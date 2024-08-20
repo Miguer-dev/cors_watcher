@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 type transaction struct {
-	request  request
-	response response
-	tags     []tag
-	err      error
+	request    request
+	response   response
+	tags       []tag
+	err        error
+	targetHost string
 }
 
 type request struct {
@@ -81,6 +83,8 @@ func (t transaction) addtransactionsByOrigins(o *options) []*transaction {
 
 	origins := setOrigins(t.request.URL, o)
 
+	t.targetHost = origins[2]
+
 	for _, origin := range origins {
 		copyTransaction := t
 
@@ -98,41 +102,40 @@ func (t transaction) addtransactionsByOrigins(o *options) []*transaction {
 }
 
 // set origins for URL
-func setOrigins(url string, o *options) []string {
+func setOrigins(u string, o *options) []string {
 	originDefaults := []string{"https://test.com", "null"}
 
-	if url != "" {
-		splitOrigin := splitURL(url)
+	host, err := url.Parse(u)
+	if err == nil {
 
-		if splitOrigin[0] != "" {
-			hostOriginOption := []string{
-				splitOrigin[0] + splitOrigin[1],
-				splitOrigin[0] + "test" + splitOrigin[1],
-				splitOrigin[0] + splitOrigin[1] + ".test.com",
-				splitOrigin[0] + "test." + splitOrigin[1],
-				splitOrigin[0] + "test." + splitOrigin[1] + "!.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + `".test.com`,
-				splitOrigin[0] + "test." + splitOrigin[1] + "$.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "%0b.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "%60.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "&.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "'.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "(.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + ").test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "*.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + ",.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + ";.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "=.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "^.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "`.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "{.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "|.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "}.test.com",
-				splitOrigin[0] + "test." + splitOrigin[1] + "~.test.com",
-			}
-
-			originDefaults = append(originDefaults, hostOriginOption...)
+		hostOriginOption := []string{
+			host.Scheme + "://" + host.Host,
+			host.Scheme + "://" + "test" + host.Host,
+			addPortIfExist(host.Scheme+"://"+host.Hostname()+".test.com", host),
+			host.Scheme + "://" + "test." + host.Host,
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"!.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+`".test.com`, host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"$.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"%0b.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"%60.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"_.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"&.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"'.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"(.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+").test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"*.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+",.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+";.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"=.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"^.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"`.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"{.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"|.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"}.test.com", host),
+			addPortIfExist(host.Scheme+"://"+"test."+host.Hostname()+"~.test.com", host),
 		}
+
+		originDefaults = append(originDefaults, hostOriginOption...)
 	}
 
 	if len(o.originsFile.origins) != 0 {
@@ -198,30 +201,39 @@ func (t *transaction) addTags() {
 	if t.response.ACDetected {
 		t.tags = append(t.tags, tag{info: " AC* ", print: cyanBackgroundFormat})
 
-		if t.response.ACAO != "" {
+		switch t.response.ACAO {
+		case "":
+			break
+		case "*":
+			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+		case t.targetHost:
+			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+		case t.request.Headers["Origin"]:
+			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: yellowBackgroundFormat})
+		default:
+			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+		}
 
-			switch t.response.ACAO {
-			case "*":
-				t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
-			default:
-				t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: yellowBackgroundFormat})
-			}
-
-			switch t.response.ACAC {
-			case "true":
+		switch t.response.ACAC {
+		case "true":
+			if t.response.ACAO == "*" || t.response.ACAO == "" || t.response.ACAO != t.request.Headers["Origin"] || t.response.ACAO == t.targetHost {
+				t.tags = append(t.tags, tag{info: " ACAC:true ", print: greenBackgroundFormat})
+			} else {
 				t.tags = append(t.tags, tag{info: " ACAC:true ", print: redBackgroundFormat})
-			case "false":
-				t.tags = append(t.tags, tag{info: " ACAC:false ", print: greenBackgroundFormat})
 			}
+		case "false":
+			t.tags = append(t.tags, tag{info: " ACAC:false ", print: greenBackgroundFormat})
+		}
 
+		if (t.response.ACAO == "*" || t.response.ACAO == t.request.Headers["Origin"]) && t.response.ACAO != t.targetHost {
 			if strings.Contains(t.response.ACAO, "http://") {
 				t.tags = append(t.tags, tag{info: " HTTP ", print: yellowBackgroundFormat})
 			}
 
 			if !t.response.vary {
-				t.tags = append(t.tags, tag{info: " Not Vary: Origin ", print: yellowBackgroundFormat})
+				t.tags = append(t.tags, tag{info: " Not Vary:Origin ", print: yellowBackgroundFormat})
 			}
-		}
 
+		}
 	}
 }

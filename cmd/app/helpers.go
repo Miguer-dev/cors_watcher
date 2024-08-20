@@ -142,27 +142,13 @@ func readJSON(body io.Reader, dst any) error {
 	return nil
 }
 
-// Separate http prefix and host from the url
-func splitURL(url string) []string {
-	var result []string
-
-	if strings.HasPrefix(url, "http://") {
-		noPrefix := url[7:]
-		split1 := strings.Split(noPrefix, "/")
-		split2 := strings.Split(split1[0], ":")
-
-		result = append(result, "http://", split2[0])
-	} else if strings.HasPrefix(url, "https://") {
-		noPrefix := url[8:]
-		split1 := strings.Split(noPrefix, "/")
-		split2 := strings.Split(split1[0], ":")
-
-		result = append(result, "https://", split2[0])
-	} else {
-		result = append(result, "", url)
+// add port to text if url has a port
+func addPortIfExist(text string, url *url.URL) string {
+	if url.Port() != "" {
+		return text + ":" + url.Port()
 	}
 
-	return result
+	return text
 }
 
 // create string with only spaces
