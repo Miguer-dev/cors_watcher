@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"sync"
 	"time"
 
@@ -34,9 +33,7 @@ func main() {
 
 	transactions := initTransactions(options)
 
-	client := &http.Client{
-		Timeout: time.Duration(options.timeout) * time.Second,
-	}
+	client := createHttpClient(options)
 
 	var url string
 	for _, transaction := range transactions {

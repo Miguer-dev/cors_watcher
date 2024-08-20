@@ -1,15 +1,21 @@
 package main
 
 import (
+	"cors_watcher/internal/validator"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
+
+	"golang.org/x/net/proxy"
 )
 
 // Print err after Panic
@@ -45,6 +51,44 @@ func (app *application) captureInterruptSignal() {
 	app.wg.Wait()
 
 	os.Exit(0)
+}
+
+// create http client to send requests
+func createHttpClient(options *options) *http.Client {
+
+	client := &http.Client{
+		Timeout: time.Duration(options.timeout) * time.Second,
+	}
+
+	if options.proxy != "" {
+		if strings.Contains(options.proxy, "http://") {
+			proxyURL, err := url.Parse(options.proxy)
+			if err != nil {
+				optErrorPrintExit(&validator.OptionError{Option: "-p", Err: err.Error()})
+
+			} else {
+				transport := &http.Transport{
+					Proxy: http.ProxyURL(proxyURL),
+				}
+
+				client.Transport = transport
+			}
+		} else if strings.Contains(options.proxy, "socks5://") {
+			dialer, err := proxy.SOCKS5("tcp", options.proxy, nil, proxy.Direct)
+			if err != nil {
+				optErrorPrintExit(&validator.OptionError{Option: "-p", Err: err.Error()})
+
+			} else {
+				transport := &http.Transport{
+					Dial: dialer.Dial,
+				}
+
+				client.Transport = transport
+			}
+		}
+	}
+
+	return client
 }
 
 // read json and validate json fields
