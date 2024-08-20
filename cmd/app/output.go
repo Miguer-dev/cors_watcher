@@ -61,22 +61,52 @@ func printTitle() {
 	fmt.Println("█▄▄ █▄█ █▀▄ ▄▄█  █▄█▄█ ▀▄█ █▄ █▄▄ █░█ ██▄ █░")
 	fmt.Println("░░░ ░░░ ░░░ ░░░  ░░░░░ ░░░ ░░ ░░░ ░░░ ░░░ ░░")
 	subtextFormat("                               by Miguer-dev")
+	fmt.Println()
 }
 
-func (transaction *transaction) printTableHeader() {
+// print options common to all request
+func printGeneralOptions(options *options) {
+	printInfo(fmt.Sprintf("Timeout: %d", options.timeout))
+	printInfo(fmt.Sprintf("Delay: %.1f", options.timedelay))
+
+	if options.proxy != "" {
+		printInfo("Proxy: " + options.proxy)
+	}
+}
+
+// print table hader and request info
+func printTableHeader(transaction *transaction) {
 	fmt.Println()
-	headerFormat(" " + transaction.request.URL + " ")
-	fmt.Print(" ")
-	headerFormat(" " + transaction.request.Method + " ")
-	fmt.Println()
+	printInfo("URL: " + transaction.request.URL + " ")
+	printInfo("Method: " + transaction.request.Method + " ")
+
+	if len(transaction.request.Headers) > 1 {
+
+		headers := "Headers: {"
+		for key, value := range transaction.request.Headers {
+			if key != "Origin" {
+				headers += fmt.Sprintf("%s: %s, ", key, value)
+			}
+		}
+		headers = headers[:len(headers)-2]
+		headers += "}"
+
+		printInfo(headers)
+	}
+
+	if transaction.request.Data != "" && transaction.request.Method != "GET" {
+		printInfo("Data: " + transaction.request.Data + " ")
+	}
+
 	fmt.Println("+------+------+-------------")
 	fmt.Println("|STATUS| SIZE |   ORIGIN    ")
 	fmt.Println("+------+------+-------------")
 }
 
-func (transaction *transaction) printTableTransaction(url string) string {
+// print transaction has table row
+func printTableTransaction(url string, transaction *transaction) string {
 	if url != transaction.request.URL {
-		transaction.printTableHeader()
+		printTableHeader(transaction)
 		url = transaction.request.URL
 	}
 

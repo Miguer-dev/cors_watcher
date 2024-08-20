@@ -35,12 +35,14 @@ func main() {
 
 	client := createHttpClient(options)
 
+	printGeneralOptions(options)
+
 	var url string
 	for _, transaction := range transactions {
 		transaction.sendRequest(client)
 		transaction.addTags()
 
-		url = transaction.printTableTransaction(url)
+		url = printTableTransaction(url, transaction)
 
 		time.Sleep(time.Duration(options.timedelay * float64(time.Second)))
 	}
