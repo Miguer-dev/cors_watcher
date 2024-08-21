@@ -1,4 +1,4 @@
-module cors_watcher
+module github.com/Miguer-dev/cors_watcher
 
 go 1.22.6
 

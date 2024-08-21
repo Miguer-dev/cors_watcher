@@ -1,9 +1,10 @@
 package main
 
 import (
-	"cors_watcher/internal/validator"
 	"fmt"
 	"os"
+
+	"github.com/Miguer-dev/cors_watcher/internal/validator"
 
 	"github.com/fatih/color"
 )

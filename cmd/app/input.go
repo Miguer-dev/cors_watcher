@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"cors_watcher/internal/validator"
+	"github.com/Miguer-dev/cors_watcher/internal/validator"
 )
 
 type options struct {

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"cors_watcher/internal/assert"
-	"cors_watcher/internal/validator"
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/Miguer-dev/cors_watcher/internal/assert"
+	"github.com/Miguer-dev/cors_watcher/internal/validator"
 )
 
 func TestValidateOptions(t *testing.T) {

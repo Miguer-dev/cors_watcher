@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"cors_watcher/internal/vcs"
+	"github.com/Miguer-dev/cors_watcher/internal/vcs"
 )
 
 var (

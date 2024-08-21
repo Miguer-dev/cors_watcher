@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cors_watcher/internal/validator"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/Miguer-dev/cors_watcher/internal/validator"
 
 	"golang.org/x/net/proxy"
 )

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"cors_watcher/internal/assert"
 	"os"
 	"testing"
+
+	"github.com/Miguer-dev/cors_watcher/internal/assert"
 )
 
 func createTempFile(t *testing.T, fileName string, fileContent string) *os.File {

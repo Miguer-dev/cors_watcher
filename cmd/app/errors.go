@@ -1,13 +1,14 @@
 package main
 
 import (
-	"cors_watcher/internal/validator"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"runtime/debug"
+
+	"github.com/Miguer-dev/cors_watcher/internal/validator"
 )
 
 var (
