@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -13,18 +12,16 @@ var (
 )
 
 type application struct {
-	wg       *sync.WaitGroup
-	mu       *sync.Mutex
-	errorLog *log.Logger
+	wg *sync.WaitGroup
+	mu *sync.Mutex
 }
 
 func main() {
 	printTitle()
 
 	app := application{
-		wg:       &sync.WaitGroup{},
-		errorLog: initErrorLog(),
-		mu:       &sync.Mutex{},
+		wg: &sync.WaitGroup{},
+		mu: &sync.Mutex{},
 	}
 
 	defer app.recoverPanic()

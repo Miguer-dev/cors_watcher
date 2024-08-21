@@ -4,17 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
-	"runtime/debug"
 
 	"github.com/Miguer-dev/cors_watcher/internal/validator"
 )
 
 var (
-	// general errors
-	errDefault = errors.New("Program terminated due to a fatal error")
-
 	// file errors
 	errOpenFile = func(filename string) error {
 		return fmt.Errorf(`Unable to open "%s" file`, filename)
@@ -41,25 +36,9 @@ var (
 	errJsonSingleValue = errors.New("body must only contain a single JSON value")
 )
 
-// Create log file for errors and setup log format
-func initErrorLog() *log.Logger {
-	errorFile, err := os.OpenFile("logs/error.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		printError(err.Error())
-		os.Exit(1)
-	}
-
-	errorLog := log.New(errorFile, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
-	return errorLog
-}
-
-// Log error details, print error tittle and exit
-func (app *application) errorLogPrintExit(err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	app.errorLog.Output(2, trace)
-
-	printError(errDefault.Error())
+// Print error  and exit
+func errorPrintExit(err error) {
+	printError(err.Error())
 	os.Exit(1)
 }
 

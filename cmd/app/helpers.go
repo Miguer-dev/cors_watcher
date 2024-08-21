@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -22,7 +21,12 @@ import (
 // Print err after Panic
 func (app *application) recoverPanic() {
 	if err := recover(); err != nil {
-		app.errorLogPrintExit(errors.New(fmt.Sprint(err)))
+		switch err.(type) {
+		case string:
+			errorPrintExit(errors.New(err.(string)))
+		case error:
+			errorPrintExit(err.(error))
+		}
 	}
 }
 
