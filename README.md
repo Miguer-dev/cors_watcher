@@ -1,4 +1,4 @@
-# Cors_Watcher
+# CORS_Watcher
 A Go tool to check CORS policies on websites, with configurable options for HTTP requests.
 ![Pasted image 20240821001633.png](https://github.com/Miguer-dev/cors_watcher/blob/main/images/Pasted%20image%2020240821001633.png)
 ## Features
