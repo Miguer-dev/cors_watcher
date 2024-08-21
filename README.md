@@ -9,11 +9,7 @@ A Go tool to check CORS policies on websites, with configurable options for HTTP
 - User-friendly interface with color-coded tags based on risk level.
 - And more, highly configurable.
 ## Installation
-1. **From source:** Download [release](https://github.com/Miguer-dev/cors_watcher/releases/) binary
-2. **Using Go:** You can install the tool directly from the repository:
-```bash
-go install github.com/Miguer-dev/cors_watcher@latest
-```
+1. Download [release](https://github.com/Miguer-dev/cors_watcher/releases/) binary
 ## Usage
 ### Options
 ```bash
