@@ -16,8 +16,7 @@ help:
 .PHONY: build
 build:
 	@echo 'Building cmd/app...'
-	go build -ldflags='-s' -o=./bin/app ./cmd/app
-	GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linux_amd64/app ./cmd/app
+	go build -ldflags='-s' -o=./bin/cors-watcher ./cmd/app
 
 # ==================================================================================== #
 # QUALITY CONTROL
