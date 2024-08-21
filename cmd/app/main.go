@@ -3,13 +3,9 @@ package main
 import (
 	"sync"
 	"time"
-
-	"github.com/Miguer-dev/cors_watcher/internal/vcs"
 )
 
-var (
-	version = vcs.Version()
-)
+const version = "v1.0.0"
 
 type application struct {
 	wg *sync.WaitGroup

@@ -47,12 +47,12 @@ func initOptions() *options {
 	flag.Float64Var(&options.timedelay, "delay", 0, "Set the delay between requests (in seconds) (default 0).")
 	flag.StringVar(&options.proxy, "proxy", "", "Set the proxy (HTTP or SOCKS5).")
 
-	displayVersion := flag.Bool("version", false, "Display version and exit")
+	displayVersion := flag.Bool("version", false, "Display version")
 
 	flag.Parse()
 
 	if *displayVersion {
-		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Version: %s\n", version)
 		os.Exit(0)
 	}
 
