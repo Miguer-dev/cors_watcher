@@ -34,20 +34,20 @@ type options struct {
 func initOptions() *options {
 	options := &options{}
 
-	flag.StringVar(&options.url, "u", "", "URL to check it´s CORS policy, it must start with http:// or https://")
-	flag.StringVar(&options.method, "m", "GET", "Set request method (GET, POST, PUT, DELETE, PATCH)")
-	flag.StringVar(&options.headers, "e", "", `Set request headers, format "key:value, key:value, ..."`)
-	flag.StringVar(&options.data, "d", "", "Set request data")
-	flag.StringVar(&options.originsFile.fileName, "ol", "", "Set filename containing the origins list")
-	flag.BoolVar(&options.originsFile.onlyOriginsFile, "ool", false, "Only use origins from origins list file")
-	flag.StringVar(&options.requestsFile.fileName, "rl", "", `Set filename containing the requests list, use json format for each row
+	flag.StringVar(&options.url, "url", "", "URL to check its CORS policy. It must start with http:// or https://.")
+	flag.StringVar(&options.method, "method", "GET", "Set the request method (GET, POST, PUT, DELETE, PATCH).")
+	flag.StringVar(&options.headers, "headers", "", `Set request headers in the format "key:value, key:value, ...".`)
+	flag.StringVar(&options.data, "data", "", "Set request data.")
+	flag.StringVar(&options.originsFile.fileName, "origins-file", "", "Specify the filename containing the list of origins.")
+	flag.BoolVar(&options.originsFile.onlyOriginsFile, "only-origins", false, "Use only the origins from the specified origins list file.")
+	flag.StringVar(&options.requestsFile.fileName, "requests-file", "", `Specify the filename containing the list of requests, using JSON format for each entry:
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
-	flag.StringVar(&options.output, "o", "", "Set filename to save the result")
-	flag.Int64Var(&options.timeout, "to", 10, "Set requests timeout")
-	flag.Float64Var(&options.timedelay, "td", 0, "Set delay between requests (default 0)")
-	flag.StringVar(&options.proxy, "p", "", "Set proxy (http or socks5)")
+	flag.StringVar(&options.output, "output", "", "Specify the filename to save the results.")
+	flag.Int64Var(&options.timeout, "timeout", 10, "Set the request timeout (in seconds).")
+	flag.Float64Var(&options.timedelay, "delay", 0, "Set the delay between requests (in seconds) (default 0).")
+	flag.StringVar(&options.proxy, "proxy", "", "Set the proxy (HTTP or SOCKS5).")
 
-	displayVersion := flag.Bool("v", false, "Display version and exit")
+	displayVersion := flag.Bool("version", false, "Display version and exit")
 
 	flag.Parse()
 
@@ -86,41 +86,41 @@ func initOptions() *options {
 // validate options format
 func (o *options) validateOptions(v *validator.Validator) {
 
-	v.Check(validator.NotBlank(o.url) || validator.NotBlank(o.requestsFile.fileName), "-u,-rl", "You must use one of this commands")
+	v.Check(validator.NotBlank(o.url) || validator.NotBlank(o.requestsFile.fileName), "-url,-requests-file", "You must use one of these options")
 
-	v.Check(!validator.NotBlank(o.url) || validator.MaxChars(o.url, 100), "-u", "Cannot be longer than 100 characters")
-	v.Check(!validator.NotBlank(o.url) || validator.Matches(o.url, validator.URLRX), "-u", "Must have a URL format, must start with http:// or https://")
+	v.Check(!validator.NotBlank(o.url) || validator.MaxChars(o.url, 100), "-url", "Cannot exceed 100 characters")
+	v.Check(!validator.NotBlank(o.url) || validator.Matches(o.url, validator.URLRX), "-url", "Must be a valid URL, starting with http:// or https://")
 
-	v.Check(validator.Matches(o.method, validator.MethodRX), "-m", "Accepted methods GET, POST, PUT, DELETE and PATCH")
+	v.Check(validator.Matches(o.method, validator.MethodRX), "-method", "Accepted methods are GET, POST, PUT, DELETE, and PATCH")
 
-	v.Check(!validator.NotBlank(o.headers) || validator.MaxChars(o.headers, 500), "-e", "Cannot be longer than 500 characters")
-	v.Check(!validator.NotBlank(o.headers) || validator.Matches(o.headers, validator.HeaderRX), "-e", `Must follow the format "key:value, key:value, ..."`)
+	v.Check(!validator.NotBlank(o.headers) || validator.MaxChars(o.headers, 500), "-headers", "Cannot exceed 500 characters")
+	v.Check(!validator.NotBlank(o.headers) || validator.Matches(o.headers, validator.HeaderRX), "-headers", `Must follow the format "key:value, key:value, ..."`)
 
-	v.Check(!validator.NotBlank(o.data) || validator.MaxChars(o.data, 500), "-d", "Cannot be longer than 500 characters")
+	v.Check(!validator.NotBlank(o.data) || validator.MaxChars(o.data, 500), "-data", "Cannot exceed 500 characters")
 
-	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.MaxChars(o.originsFile.fileName, 20), "-ol", "Cannot be longer than 20 characters")
-	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.Matches(o.originsFile.fileName, validator.FileRX), "-ol", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.MaxChars(o.originsFile.fileName, 20), "-origins-file", "Cannot exceed 20 characters")
+	v.Check(!validator.NotBlank(o.originsFile.fileName) || validator.Matches(o.originsFile.fileName, validator.FileRX), "-origins-file", "A filename cannot contain '/'")
 
-	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.MaxChars(o.requestsFile.fileName, 20), "-rl", "Cannot be longer than 20 characters")
-	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.Matches(o.requestsFile.fileName, validator.FileRX), "-rl", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.MaxChars(o.requestsFile.fileName, 20), "-requests-file", "Cannot exceed 20 characters")
+	v.Check(!validator.NotBlank(o.requestsFile.fileName) || validator.Matches(o.requestsFile.fileName, validator.FileRX), "-requests-file", "A filename cannot contain '/'")
 
-	v.Check(!validator.NotBlank(o.output) || validator.MaxChars(o.output, 20), "-o", "Cannot be longer than 20 characters")
-	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-o", "A filename cannot contain /")
+	v.Check(!validator.NotBlank(o.output) || validator.MaxChars(o.output, 20), "-output", "Cannot exceed 20 characters")
+	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-output", "A filename cannot contain '/'")
 
-	v.Check(validator.MinNumber(o.timeout, 0), "-to", "Must be greater that 0")
-	v.Check(validator.MaxNumber(o.timeout, 10), "-to", "Must be lower that 10")
+	v.Check(validator.MinNumber(o.timeout, 0), "-timeout", "Must be greater than 0")
+	v.Check(validator.MaxNumber(o.timeout, 10), "-timeout", "Must be less than 10")
 
-	v.Check(validator.MinNumber(o.timedelay, 0), "-td", "Must be greater that 0")
-	v.Check(validator.MaxNumber(o.timedelay, 5), "-td", "Must be lower that 5")
+	v.Check(validator.MinNumber(o.timedelay, 0), "-delay", "Must be greater than 0")
+	v.Check(validator.MaxNumber(o.timedelay, 5), "-delay", "Must be less than 5")
 
-	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-p", "Must start with http:// or socks5://")
+	v.Check(!validator.NotBlank(o.proxy) || validator.Matches(o.proxy, validator.ProxyRX), "-proxy", "Must start with http:// or socks5://")
 }
 
-// get and validate origins from originsFile -ol
+// get and validate origins from originsFile -origins-file
 func (o *options) getOriginsFromFile(v *validator.Validator) {
 	file, err := os.Open(o.originsFile.fileName)
 	if err != nil {
-		v.AddError("-ol", errOpenFile(o.originsFile.fileName).Error())
+		v.AddError("-origins-file", errOpenFile(o.originsFile.fileName).Error())
 		return
 	}
 	defer file.Close()
@@ -130,12 +130,12 @@ func (o *options) getOriginsFromFile(v *validator.Validator) {
 		url := scanner.Text()
 
 		if !validator.NotBlank(url) {
-			v.AddError("-ol", `There cannot be an empty row`)
+			v.AddError("-origins-file", `There cannot be an empty row`)
 			continue
 		}
 
 		if !validator.Matches(url, validator.URLRX) {
-			v.AddError("-ol", `Origins must have a URL format, must start with http:// or https://`)
+			v.AddError("-origins-file", `Each origin must be a valid URL, starting with http:// or https://`)
 			continue
 		}
 
@@ -143,16 +143,16 @@ func (o *options) getOriginsFromFile(v *validator.Validator) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		v.AddError("-ol", errReadFile(o.originsFile.fileName).Error())
+		v.AddError("-origins-file", errReadFile(o.originsFile.fileName).Error())
 		return
 	}
 }
 
-// get and validate requests from requestsFile -rl
+// get and validate requests from requestsFile -requests-file
 func (o *options) getRequestsFromFile(v *validator.Validator) {
 	file, err := os.Open(o.requestsFile.fileName)
 	if err != nil {
-		v.AddError("-rl", errOpenFile(file.Name()).Error())
+		v.AddError("-requests-file", errOpenFile(file.Name()).Error())
 		return
 	}
 	defer file.Close()
@@ -165,27 +165,27 @@ func (o *options) getRequestsFromFile(v *validator.Validator) {
 
 		err := readJSON(lineReader, &request)
 		if err != nil {
-			v.AddError("-rl", err.Error())
+			v.AddError("-requests-file", err.Error())
 			continue
 		}
 
 		if !validator.NotBlank(request.URL) {
-			v.AddError("-rl", `Each request must contain the “url” key`)
+			v.AddError("-requests-file", `Each request must contain the 'url' key`)
 			continue
 		}
 
 		if !validator.Matches(request.URL, validator.URLRX) {
-			v.AddError("-rl", `The “url” key must have a URL format, must start with http:// or https://`)
+			v.AddError("-requests-file", `The 'url' key must be a valid URL, starting with http:// or https://`)
 			continue
 		}
 
 		if !validator.NotBlank(request.Method) {
-			v.AddError("-rl", `Each request must contain the “method” key`)
+			v.AddError("-requests-file", `Each request must contain the 'method' key`)
 			continue
 		}
 
 		if !validator.Matches(request.Method, validator.MethodRX) {
-			v.AddError("-rl", `The “method” key accepted values: GET, POST, PUT, DELETE and PATCH`)
+			v.AddError("-requests-file", `The 'method' key must be one of: GET, POST, PUT, DELETE, PATCH`)
 			continue
 		}
 
@@ -193,7 +193,7 @@ func (o *options) getRequestsFromFile(v *validator.Validator) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		v.AddError("-rl", errReadFile(o.requestsFile.fileName).Error())
+		v.AddError("-requests-file", errReadFile(o.requestsFile.fileName).Error())
 		return
 	}
 }

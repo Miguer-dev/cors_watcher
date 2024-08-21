@@ -127,7 +127,7 @@ func printFile(filename string, transactions [][]*transaction) {
 
 		file, err := os.Create(filename)
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-o", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output", Err: err.Error()})
 		}
 		defer file.Close()
 
@@ -178,7 +178,7 @@ func printFile(filename string, transactions [][]*transaction) {
 
 		_, err = file.WriteString(text)
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-o", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output", Err: err.Error()})
 		}
 
 		fmt.Println()

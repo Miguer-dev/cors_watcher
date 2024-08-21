@@ -62,7 +62,7 @@ func createHttpClient(options *options) *http.Client {
 		if strings.Contains(options.proxy, "http://") {
 			proxyURL, err := url.Parse(options.proxy)
 			if err != nil {
-				optErrorPrintExit(&validator.OptionError{Option: "-p", Err: err.Error()})
+				optErrorPrintExit(&validator.OptionError{Option: "-proxy", Err: err.Error()})
 
 			} else {
 				transport := &http.Transport{
@@ -74,7 +74,7 @@ func createHttpClient(options *options) *http.Client {
 		} else if strings.Contains(options.proxy, "socks5://") {
 			dialer, err := proxy.SOCKS5("tcp", options.proxy, nil, proxy.Direct)
 			if err != nil {
-				optErrorPrintExit(&validator.OptionError{Option: "-p", Err: err.Error()})
+				optErrorPrintExit(&validator.OptionError{Option: "-proxy", Err: err.Error()})
 
 			} else {
 				transport := &http.Transport{
