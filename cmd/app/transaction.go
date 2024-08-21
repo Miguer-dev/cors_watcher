@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,7 +26,7 @@ type request struct {
 
 type response struct {
 	statusCode int
-	length     int
+	length     int64
 	ACDetected bool   // Access-Control-* headers detected
 	ACAO       string // Access-Control-Allow-Origin header
 	ACAC       string // Access-Control-Allow-Credentials header
@@ -169,7 +170,13 @@ func (t *transaction) sendRequest(client *http.Client) {
 		return
 	}
 
-	t.response.length = int(response.ContentLength)
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.response.length = -1
+	} else {
+		t.response.length = int64(len(body))
+	}
+
 	t.response.statusCode = response.StatusCode
 
 	for key, value := range response.Header {

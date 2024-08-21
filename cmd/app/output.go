@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/Miguer-dev/cors_watcher/internal/validator"
 
@@ -107,12 +108,20 @@ func printTableHeader(transaction *transaction) {
 // print transaction has table row
 func (app *application) printTableTransaction(transaction *transaction) {
 	status := transaction.response.statusCode
+	statusSpaces := spaces(int64(status), 5)
 	len := transaction.response.length
+	lenSpaces := spaces(len, 5)
+
+	lenString := strconv.FormatInt(len, 10)
+	if lenString == "-1" {
+		lenString = "unk"
+		lenSpaces = "  "
+	}
 
 	app.mu.Lock()
 	defer app.mu.Unlock()
 
-	fmt.Printf("| %d%s| %d%s| %s", status, spaces(status, 5), len, spaces(len, 5), transaction.request.Headers["Origin"])
+	fmt.Printf("| %d%s| %s%s| %s", status, statusSpaces, lenString, lenSpaces, transaction.request.Headers["Origin"])
 
 	for _, tag := range transaction.tags {
 		fmt.Print(" ")
@@ -163,9 +172,17 @@ func printFile(filename string, transactions [][]*transaction) {
 
 			for _, transaction := range arrayTransactions {
 				status := transaction.response.statusCode
+				statusSpaces := spaces(int64(status), 5)
 				len := transaction.response.length
+				lenSpaces := spaces(len, 5)
 
-				text += fmt.Sprintf("| %d%s| %d%s| %s", status, spaces(status, 5), len, spaces(len, 5), transaction.request.Headers["Origin"])
+				lenString := strconv.FormatInt(len, 10)
+				if lenString == "-1" {
+					lenString = "unk"
+					lenSpaces = "  "
+				}
+
+				text += fmt.Sprintf("| %d%s| %s%s| %s", status, statusSpaces, lenString, lenSpaces, transaction.request.Headers["Origin"])
 
 				for _, tag := range transaction.tags {
 					text += fmt.Sprint(" ")

@@ -155,10 +155,10 @@ func addPortIfExist(text string, url *url.URL) string {
 }
 
 // create string with only spaces
-func spaces(num int, max int) string {
-	if len(strconv.Itoa(num)) > max {
-		return ""
+func spaces(num int64, max int) string {
+	if len(strconv.FormatInt(num, 10)) > max {
+		return " "
 	} else {
-		return strings.Repeat(" ", max-len(strconv.Itoa(num)))
+		return strings.Repeat(" ", max-len(strconv.FormatInt(num, 10)))
 	}
 }
