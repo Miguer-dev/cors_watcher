@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const version = "v1.1.1"
+const version = "v1.1.0"
 
 type application struct {
 	wg *sync.WaitGroup
