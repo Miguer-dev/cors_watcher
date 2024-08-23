@@ -9,7 +9,7 @@ A Go tool to check CORS policies on websites, with configurable options for HTTP
 - User-friendly interface with color-coded tags based on risk level.
 - And more, highly configurable.
 ## Installation
-1. Download [release](https://github.com/Miguer-dev/cors_watcher/releases/) binary
+Download [release](https://github.com/Miguer-dev/cors_watcher/releases/) binary
 ## Usage
 ### Options
 ```bash
@@ -23,10 +23,13 @@ A Go tool to check CORS policies on websites, with configurable options for HTTP
 - `-only-origins`: Use only the origins from the specified origins list file.
 - `-requests-file`: Specify the filename containing the list of requests, using JSON format for each entry:
 `{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`
-- `-output`: Specify the filename to save the results.
 - `-timeout`: Set the request timeout (in seconds).
 - `-delay`: Set the delay between requests (in seconds).
 - `-proxy`: Set the proxy (HTTP or SOCKS5).
+- `-output`: Specify the filename to save the results in a readable format.
+- `-output-json`: Specify the filename to save the results in json format.
+- `-output-csv`: Specify the filename to save the results in csv format.
+- `-output-yaml`: Specify the filename to save the results in yaml format.
 - `-version`: Show the tool's version.
 ### Tagging System
 Tags highlight relevant information found regarding the website's CORS policies. The color of the tag indicates the risk level (green = low, yellow = medium, red = high).
