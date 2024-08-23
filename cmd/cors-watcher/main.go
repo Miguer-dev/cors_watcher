@@ -49,4 +49,5 @@ func main() {
 	}
 
 	printFile(options.output, transactions)
+	printJsonFile(options.outputJSON, transactions)
 }

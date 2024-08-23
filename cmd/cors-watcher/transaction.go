@@ -34,7 +34,7 @@ type response struct {
 }
 
 type tag struct {
-	info  string
+	Info  string `json:"tag"`
 	print func(a ...interface{})
 }
 
@@ -205,44 +205,44 @@ func (t *transaction) sendRequest(client *http.Client) {
 // create tags from response
 func (t *transaction) addTags() {
 	if t.err != nil {
-		t.tags = append(t.tags, tag{info: " Transaction Fail ", print: redBackgroundFormat})
+		t.tags = append(t.tags, tag{Info: " Transaction Fail ", print: redBackgroundFormat})
 		return
 	}
 
 	if t.response.ACDetected {
-		t.tags = append(t.tags, tag{info: " AC* ", print: cyanBackgroundFormat})
+		t.tags = append(t.tags, tag{Info: " AC* ", print: cyanBackgroundFormat})
 
 		switch t.response.ACAO {
 		case "":
 			break
 		case "*":
-			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+			t.tags = append(t.tags, tag{Info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
 		case t.targetHost:
-			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+			t.tags = append(t.tags, tag{Info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
 		case t.request.Headers["Origin"]:
-			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: yellowBackgroundFormat})
+			t.tags = append(t.tags, tag{Info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: yellowBackgroundFormat})
 		default:
-			t.tags = append(t.tags, tag{info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
+			t.tags = append(t.tags, tag{Info: fmt.Sprintf(" ACAO:%s ", t.response.ACAO), print: greenBackgroundFormat})
 		}
 
 		switch t.response.ACAC {
 		case "true":
 			if t.response.ACAO == "*" || t.response.ACAO == "" || t.response.ACAO != t.request.Headers["Origin"] || t.response.ACAO == t.targetHost {
-				t.tags = append(t.tags, tag{info: " ACAC:true ", print: greenBackgroundFormat})
+				t.tags = append(t.tags, tag{Info: " ACAC:true ", print: greenBackgroundFormat})
 			} else {
-				t.tags = append(t.tags, tag{info: " ACAC:true ", print: redBackgroundFormat})
+				t.tags = append(t.tags, tag{Info: " ACAC:true ", print: redBackgroundFormat})
 			}
 		case "false":
-			t.tags = append(t.tags, tag{info: " ACAC:false ", print: greenBackgroundFormat})
+			t.tags = append(t.tags, tag{Info: " ACAC:false ", print: greenBackgroundFormat})
 		}
 
 		if (t.response.ACAO == "*" || t.response.ACAO == t.request.Headers["Origin"]) && t.response.ACAO != t.targetHost {
 			if strings.Contains(t.response.ACAO, "http://") {
-				t.tags = append(t.tags, tag{info: " HTTP ", print: yellowBackgroundFormat})
+				t.tags = append(t.tags, tag{Info: " HTTP ", print: yellowBackgroundFormat})
 			}
 
 			if !t.response.vary {
-				t.tags = append(t.tags, tag{info: " Not Vary:Origin ", print: yellowBackgroundFormat})
+				t.tags = append(t.tags, tag{Info: " Not Vary:Origin ", print: yellowBackgroundFormat})
 			}
 
 		}

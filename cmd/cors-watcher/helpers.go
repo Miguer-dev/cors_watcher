@@ -145,6 +145,18 @@ func readJSON(body io.Reader, dst any) error {
 	return nil
 }
 
+// Build json
+func writeJSON(data any) ([]byte, error) {
+	js, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+
+	js = append(js, '\n')
+
+	return js, nil
+}
+
 // add port to text if url has a port
 func addPortIfExist(text string, url *url.URL) string {
 	if url.Port() != "" {

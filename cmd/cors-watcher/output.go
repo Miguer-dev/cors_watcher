@@ -125,7 +125,7 @@ func (app *application) printTableTransaction(transaction *transaction) {
 
 	for _, tag := range transaction.tags {
 		fmt.Print(" ")
-		tag.print(tag.info)
+		tag.print(tag.Info)
 	}
 
 	fmt.Println()
@@ -186,7 +186,7 @@ func printFile(filename string, transactions [][]*transaction) {
 
 				for _, tag := range transaction.tags {
 					text += fmt.Sprint(" ")
-					text += tag.info
+					text += tag.Info
 				}
 
 				text += "\n"
@@ -201,6 +201,76 @@ func printFile(filename string, transactions [][]*transaction) {
 
 		fmt.Println()
 		printWarning("Saving output ...")
+		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
+	}
+}
+
+type transactionsOutput struct {
+	URL       string            `json:"url"`
+	Method    string            `json:"method"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Data      string            `json:"data,omitempty"`
+	Responses []responsesOutput `json:"responses"`
+}
+
+type responsesOutput struct {
+	StatusCode int    `json:"status_code"`
+	Length     int64  `json:"size"`
+	Origin     string `json:"origin"`
+	Tags       []tag  `json:"tags,omitempty"`
+}
+
+// save output in json format
+func printJsonFile(filename string, transactions [][]*transaction) {
+	if filename != "" {
+		file, err := os.Create(filename)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: err.Error()})
+		}
+		defer file.Close()
+
+		arrayTransactionsOutput := []transactionsOutput{}
+		for _, arrayTransactions := range transactions {
+			transactionOutput := transactionsOutput{
+				URL:     arrayTransactions[0].request.URL,
+				Method:  arrayTransactions[0].request.Method,
+				Data:    arrayTransactions[0].request.Data,
+				Headers: map[string]string{}}
+
+			if len(arrayTransactions[0].request.Headers) > 1 {
+
+				for key, value := range arrayTransactions[0].request.Headers {
+					if key != "Origin" {
+						transactionOutput.Headers[key] = value
+					}
+				}
+			}
+
+			for _, transaction := range arrayTransactions {
+				response := responsesOutput{
+					StatusCode: transaction.response.statusCode,
+					Length:     transaction.response.length,
+					Origin:     transaction.request.Headers["Origin"],
+					Tags:       transaction.tags,
+				}
+
+				transactionOutput.Responses = append(transactionOutput.Responses, response)
+			}
+
+			arrayTransactionsOutput = append(arrayTransactionsOutput, transactionOutput)
+		}
+
+		json, err := writeJSON(map[string]any{"requests": arrayTransactionsOutput})
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: err.Error()})
+		}
+		_, err = file.Write(json)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: err.Error()})
+		}
+
+		fmt.Println()
+		printWarning("Saving output in JSON format ...")
 		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
 	}
 }
