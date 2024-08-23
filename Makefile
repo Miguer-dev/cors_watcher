@@ -12,11 +12,11 @@ help:
 # BUILD
 # ==================================================================================== #
 
-## build: build the cmd/app application
+## build: build the cmd/cors-watcher application
 .PHONY: build
 build:
 	@echo 'Building cmd/app...'
-	go build -ldflags='-s' -o=./bin/cors-watcher ./cmd/app
+	go build -ldflags='-s' -o=./bin/cors-watcher ./cmd/cors-watcher
 
 # ==================================================================================== #
 # QUALITY CONTROL
