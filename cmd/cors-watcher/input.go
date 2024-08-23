@@ -24,10 +24,13 @@ type options struct {
 		fileName string
 		requests []request
 	}
-	output    string
-	timeout   int64
-	timedelay float64
-	proxy     string
+	output     string
+	outputJSON string
+	outputCSV  string
+	outputYAML string
+	timeout    int64
+	timedelay  float64
+	proxy      string
 }
 
 // init options intance with command options values
@@ -42,7 +45,10 @@ func initOptions() *options {
 	flag.BoolVar(&options.originsFile.onlyOriginsFile, "only-origins", false, "Use only the origins from the specified origins list file.")
 	flag.StringVar(&options.requestsFile.fileName, "requests-file", "", `Specify the filename containing the list of requests, using JSON format for each entry:
 	{"url": "https://url1.com", "method": "POST", "headers": {"header1": "value1", "header2": "value2"}, "data": "data1"}`)
-	flag.StringVar(&options.output, "output", "", "Specify the filename to save the results.")
+	flag.StringVar(&options.output, "output", "", "Specify the filename to save the results in a readable format.")
+	flag.StringVar(&options.outputJSON, "output-json", "", "Specify the filename to save the results in json format.")
+	flag.StringVar(&options.outputCSV, "output-csv", "", "Specify the filename to save the results in csv format.")
+	flag.StringVar(&options.outputYAML, "output-yaml", "", "Specify the filename to save the results in yaml format.")
 	flag.Int64Var(&options.timeout, "timeout", 10, "Set the request timeout (in seconds).")
 	flag.Float64Var(&options.timedelay, "delay", 0, "Set the delay between requests (in seconds) (default 0).")
 	flag.StringVar(&options.proxy, "proxy", "", "Set the proxy (HTTP or SOCKS5).")
@@ -107,6 +113,15 @@ func (o *options) validateOptions(v *validator.Validator) {
 	v.Check(!validator.NotBlank(o.output) || validator.MaxChars(o.output, 20), "-output", "Cannot exceed 20 characters")
 	v.Check(!validator.NotBlank(o.output) || validator.Matches(o.output, validator.FileRX), "-output", "A filename cannot contain '/'")
 
+	v.Check(!validator.NotBlank(o.outputJSON) || validator.MaxChars(o.outputJSON, 20), "-output-json", "Cannot exceed 20 characters")
+	v.Check(!validator.NotBlank(o.outputJSON) || validator.Matches(o.outputJSON, validator.FileRX), "-output-json", "A filename cannot contain '/'")
+
+	v.Check(!validator.NotBlank(o.outputCSV) || validator.MaxChars(o.outputCSV, 20), "-output-csv", "Cannot exceed 20 characters")
+	v.Check(!validator.NotBlank(o.outputCSV) || validator.Matches(o.outputCSV, validator.FileRX), "-output-csv", "A filename cannot contain '/'")
+
+	v.Check(!validator.NotBlank(o.outputYAML) || validator.MaxChars(o.outputYAML, 20), "-output-yaml", "Cannot exceed 20 characters")
+	v.Check(!validator.NotBlank(o.outputYAML) || validator.Matches(o.outputYAML, validator.FileRX), "-output-yaml", "A filename cannot contain '/'")
+
 	v.Check(validator.MinNumber(o.timeout, 0), "-timeout", "Must be greater than 0")
 	v.Check(validator.MaxNumber(o.timeout, 10), "-timeout", "Must be less than 10")
 
@@ -152,7 +167,7 @@ func (o *options) getOriginsFromFile(v *validator.Validator) {
 func (o *options) getRequestsFromFile(v *validator.Validator) {
 	file, err := os.Open(o.requestsFile.fileName)
 	if err != nil {
-		v.AddError("-requests-file", errOpenFile(file.Name()).Error())
+		v.AddError("-requests-file", errOpenFile(o.requestsFile.fileName).Error())
 		return
 	}
 	defer file.Close()

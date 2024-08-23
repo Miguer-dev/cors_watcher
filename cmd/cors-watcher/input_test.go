@@ -118,7 +118,10 @@ func TestValidateOptions(t *testing.T) {
 					requests []request
 				}{
 					fileName: "requests1.txt"},
-				output: "output. file"},
+				output:     "output. file",
+				outputJSON: "file.json",
+				outputCSV:  "csvFile",
+				outputYAML: "result"},
 			expectedErrors: []*validator.OptionError{},
 		},
 		{
@@ -136,7 +139,10 @@ func TestValidateOptions(t *testing.T) {
 					requests []request
 				}{
 					fileName: "requests/1.txt"},
-				output: "output. /file"},
+				output:     "output. /file",
+				outputJSON: "file01234567890123456789.json",
+				outputCSV:  "/csvFile",
+				outputYAML: "res/ult"},
 			expectedErrors: []*validator.OptionError{
 				{Option: "-origins-file",
 					Err: "A filename cannot contain '/'",
@@ -145,6 +151,15 @@ func TestValidateOptions(t *testing.T) {
 					Err: "A filename cannot contain '/'",
 				},
 				{Option: "-output",
+					Err: "A filename cannot contain '/'",
+				},
+				{Option: "-output-json",
+					Err: "Cannot exceed 20 characters",
+				},
+				{Option: "-output-csv",
+					Err: "A filename cannot contain '/'",
+				},
+				{Option: "-output-yaml",
 					Err: "A filename cannot contain '/'",
 				},
 			},
