@@ -14,8 +14,14 @@ var (
 	errOpenFile = func(filename string) error {
 		return fmt.Errorf(`Unable to open "%s" file`, filename)
 	}
+	errCreateFile = func(filename string) error {
+		return fmt.Errorf(`Unable to create "%s" file`, filename)
+	}
 	errReadFile = func(filename string) error {
 		return fmt.Errorf(`Unable to read "%s" file`, filename)
+	}
+	errWriteFile = func(filename string) error {
+		return fmt.Errorf(`Unable to write "%s" file`, filename)
 	}
 
 	// json errors
