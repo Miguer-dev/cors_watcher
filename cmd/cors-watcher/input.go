@@ -79,6 +79,10 @@ func initOptions() *options {
 		options.outputCSV += ".csv"
 	}
 
+	if options.outputYAML != "" && !strings.Contains(options.outputYAML, ".yaml") {
+		options.outputYAML += ".yaml"
+	}
+
 	if options.originsFile.fileName != "" {
 		options.getOriginsFromFile(v)
 

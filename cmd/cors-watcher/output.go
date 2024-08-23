@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Miguer-dev/cors_watcher/internal/validator"
+	"gopkg.in/yaml.v2"
 
 	"github.com/fatih/color"
 )
@@ -350,6 +351,61 @@ func printCsvFile(filename string, transactions [][]*transaction) {
 
 		fmt.Println()
 		printWarning("Saving output in CSV format ...")
+		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
+	}
+}
+
+// save output in yaml format
+func printYamlFile(filename string, transactions [][]*transaction) {
+	if filename != "" {
+		file, err := os.Create(filename)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-yaml", Err: errCreateFile(filename).Error()})
+		}
+		defer file.Close()
+
+		arrayTransactionsOutput := []transactionsOutput{}
+		for _, arrayTransactions := range transactions {
+			transactionOutput := transactionsOutput{
+				URL:     arrayTransactions[0].request.URL,
+				Method:  arrayTransactions[0].request.Method,
+				Data:    arrayTransactions[0].request.Data,
+				Headers: map[string]string{}}
+
+			if len(arrayTransactions[0].request.Headers) > 1 {
+
+				for key, value := range arrayTransactions[0].request.Headers {
+					if key != "Origin" {
+						transactionOutput.Headers[key] = value
+					}
+				}
+			}
+
+			for _, transaction := range arrayTransactions {
+				response := responsesOutput{
+					StatusCode: transaction.response.statusCode,
+					Length:     transaction.response.length,
+					Origin:     transaction.request.Headers["Origin"],
+					Tags:       transaction.tags,
+				}
+
+				transactionOutput.Responses = append(transactionOutput.Responses, response)
+			}
+
+			arrayTransactionsOutput = append(arrayTransactionsOutput, transactionOutput)
+		}
+
+		yamlData, err := yaml.Marshal(arrayTransactionsOutput)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-yaml", Err: errWriteFile(filename).Error()})
+		}
+
+		if _, err := file.Write(yamlData); err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-yaml", Err: errWriteFile(filename).Error()})
+		}
+
+		fmt.Println()
+		printWarning("Saving output in YAML format ...")
 		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
 	}
 }

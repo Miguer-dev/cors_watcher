@@ -51,4 +51,5 @@ func main() {
 	printFile(options.output, transactions)
 	printJsonFile(options.outputJSON, transactions)
 	printCsvFile(options.outputCSV, transactions)
+	printYamlFile(options.outputYAML, transactions)
 }
