@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Miguer-dev/cors_watcher/internal/validator"
 )
@@ -68,6 +69,14 @@ func initOptions() *options {
 
 	if !v.Valid() {
 		optsErrorPrintExit(v.Errors)
+	}
+
+	if options.outputJSON != "" && !strings.Contains(options.outputJSON, ".json") {
+		options.outputJSON += ".json"
+	}
+
+	if options.outputCSV != "" && !strings.Contains(options.outputCSV, ".csv") {
+		options.outputCSV += ".csv"
 	}
 
 	if options.originsFile.fileName != "" {

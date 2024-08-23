@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Miguer-dev/cors_watcher/internal/validator"
 
@@ -137,7 +140,7 @@ func printFile(filename string, transactions [][]*transaction) {
 
 		file, err := os.Create(filename)
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-output", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output", Err: errCreateFile(filename).Error()})
 		}
 		defer file.Close()
 
@@ -196,7 +199,7 @@ func printFile(filename string, transactions [][]*transaction) {
 
 		_, err = file.WriteString(text)
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-output", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output", Err: errWriteFile(filename).Error()})
 		}
 
 		fmt.Println()
@@ -225,7 +228,7 @@ func printJsonFile(filename string, transactions [][]*transaction) {
 	if filename != "" {
 		file, err := os.Create(filename)
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: errCreateFile(filename).Error()})
 		}
 		defer file.Close()
 
@@ -262,15 +265,91 @@ func printJsonFile(filename string, transactions [][]*transaction) {
 
 		json, err := writeJSON(map[string]any{"requests": arrayTransactionsOutput})
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: errWriteFile(filename).Error()})
 		}
 		_, err = file.Write(json)
 		if err != nil {
-			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: err.Error()})
+			optErrorPrintExit(&validator.OptionError{Option: "-output-json", Err: errWriteFile(filename).Error()})
 		}
 
 		fmt.Println()
 		printWarning("Saving output in JSON format ...")
+		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
+	}
+}
+
+// save output in csv format
+func printCsvFile(filename string, transactions [][]*transaction) {
+
+	if filename != "" {
+		file, err := os.Create(filename)
+		if err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-csv", Err: errCreateFile(filename).Error()})
+		}
+		defer file.Close()
+
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+
+		header := []string{"Url", "Method", "Headers", "Data", "Status", "Size", "Origin", "Tags"}
+		if err := writer.Write(header); err != nil {
+			optErrorPrintExit(&validator.OptionError{Option: "-output-csv", Err: errWriteFile(filename).Error()})
+		}
+
+		data := [][]string{}
+
+		for _, arrayTransactions := range transactions {
+			for _, transaction := range arrayTransactions {
+				headers := map[string]string{}
+
+				if len(transaction.request.Headers) > 1 {
+
+					for key, value := range transaction.request.Headers {
+						if key != "Origin" {
+							headers[key] = value
+						}
+					}
+				}
+
+				headersJSON, err := json.Marshal(headers)
+				if err != nil {
+					optErrorPrintExit(&validator.OptionError{Option: "-output-csv", Err: errWriteFile(filename).Error()})
+				}
+
+				tags := []string{}
+				for _, tag := range transaction.tags {
+					tags = append(tags, tag.Info)
+				}
+				tagsString := strings.Join(tags, ",")
+
+				origin := transaction.request.Headers["Origin"]
+				if strings.Contains(origin, ";") {
+					origin = `"` + origin + `"`
+				}
+
+				row := []string{
+					transaction.request.URL,
+					transaction.request.Method,
+					string(headersJSON),
+					transaction.request.Data,
+					strconv.Itoa(transaction.response.statusCode),
+					strconv.FormatInt(transaction.response.length, 10),
+					origin,
+					tagsString,
+				}
+
+				data = append(data, row)
+			}
+		}
+
+		for _, row := range data {
+			if err := writer.Write(row); err != nil {
+				optErrorPrintExit(&validator.OptionError{Option: "-output-csv", Err: errWriteFile(filename).Error()})
+			}
+		}
+
+		fmt.Println()
+		printWarning("Saving output in CSV format ...")
 		printInfo(fmt.Sprintf(`Output successfully saved in “%s”`, filename))
 	}
 }
